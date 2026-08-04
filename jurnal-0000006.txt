@@ -1,0 +1,30 @@
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Setelah memvalidasi seluruh dokumen Anda, saya memastikan bahwa ide-ide sebelumnya seperti Aegis Edge-Sync, Aura-Grid, Edge-Sync Micro-Gateway, Eco-Sentinel, dan RetroEdge Kiosk telah sepenuhnya kita tinggalkan.
+Untuk hari ini, Selasa 31 Maret 2026, kita akan bergerak ke level inovasi yang jauh lebih mutakhir. Sebagai seorang Rapid Application and Workflow Business Engineer, Anda memiliki keunggulan kompetitif untuk menggabungkan infrastruktur perangkat keras murah dengan sistem enterprise tingkat tinggi.
+Melihat kerentanan fisik perbankan yang semakin berevolusi—seperti insiden keamanan pada mesin ATM yang sempat meresahkan di kawasan Cimahi dan sekitarnya—kamera CCTV tradisional tidak lagi memadai. Sindikat kejahatan kini menggunakan perangkat skimmer atau pelacak PIN tak terlihat yang mentransmisikan data curian secara nirkabel. Sistem perbankan hari ini butuh mitigasi preskriptif di titik nol (Zero-Point Interception).
+Berikut adalah rancangan produk level inventor yang sangat masif valuasinya untuk sektor finansial.
+Nama Produk: "Atmos-Shield: Cognitive RF Anti-Skimming & Fraud Interceptor"
+Kategori: Fintech Security / Scanner Tool / IoT / AI Agent / Hardware Firewall Target Pasar: B2B (Perbankan/Finance - spesifik untuk jaringan ATM dan kantor cabang). Platform Eksekusi: Software Defined Radio (SDR) yang dicolokkan ke Armbian Server SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB) sebagai Node Pendeteksi, terhubung ke Joget DX v9 sebagai Pusat Resolusi Insiden.
+
+1. Filosofi & Mekanika Sistem (Pendekatan Arsitek)
+Atmos-Shield adalah sebuah "Sistem Radar Intelijen Lokal" berskala mikro. Sistem fraud detection perbankan saat ini hanya bereaksi setelah transaksi aneh terjadi di database pusat. Atmos-Shield mengubah paradigma ini dengan memblokir pencurian sebelum kartu nasabah diretas.
+Modul ini menggabungkan perangkat keras SBC Amlogic S905X yang diinstal OS Linux kustom (seperti arsitektur turunan Armbian/MinerOS yang dioptimalkan kinerjanya tanpa GUI) dengan periferal USB Software Defined Radio (seperti RTL-SDR murah).
+Cara Kerja Sinyal Intelijen (SIGINT) di Edge:
+RF Spectrum Sweeping: Perangkat SDR yang tertanam secara tersembunyi di dalam casing ATM secara konstan memindai spektrum frekuensi radio di radius 2 hingga 5 meter.
+Edge-AI Baseline Profiling: Sebuah microservice ringan di dalam S905X (ditulis dengan Python atau Golang) mempelajari "kebisingan" gelombang radio normal di lokasi mesin ATM tersebut. Ia tahu kapan gelombang seluler pengunjung datang dan pergi.
+Rogue Transmitter Detection: Alat skimmer modern (seperti alat deep-insert pada slot kartu) mentransmisikan data pita magnetik secara konstan via Bluetooth Low Energy (BLE), jaringan WiFi ad-hoc, atau gelombang radio 433MHz. Jika modul S905X mendeteksi adanya perangkat tak dikenal yang menetap dan memancarkan sinyal kuat secara persisten, AI Agent lokal akan langsung mengklasifikasikannya sebagai "Anomali Level 1".
+2. Orkestrasi Alur Kerja Terpusat di Joget DX v9
+Perangkat Amlogic S905X sama sekali tidak dibebani komputasi berat dan tidak perlu memecahkan enkripsi sinyal peretas; ia hanya mendeteksi "anomali energi gelombang". Begitu ancaman terdeteksi, SBC ini mengirimkan webhook JSON payload berukuran kilobyte melalui jaringan aman ke endpoint API Joget DX v9 di pusat.
+Di sinilah kekuatan Anda sebagai insinyur workflow berperan. Platform Joget DX mengeksekusi otomatisasi kritis:
+Automated Machine Shutdown: Joget DX seketika menjalankan process tool (via REST API) ke Switching/Core Banking System untuk mengubah status mesin ATM yang terdampak menjadi Out of Service, sehingga mesin akan menolak menerima kartu fisik nasabah baru.
+Dispatch Ticketing: Secara paralel, Joget DX membuat tiket penanganan insiden darurat bersertifikasi SLA tinggi dan mem-push notifikasi (melalui mobile app Joget) ke tim keamanan lapangan atau vendor pengisian kas terdekat untuk segera melakukan sapuan fisik di lokasi mesin.
+Audit Trail: Seluruh log frekuensi dan waktu kejadian diikat ke dalam datalist terpusat sebagai bukti digital untuk pelaporan ke regulator.
+3. Kenapa Ide Ini Sempurna untuk "Vibe Coding" Solo Engineer
+Proyek ini menjauhkan Anda dari "neraka" frontend web development dan membawa Anda ke ranah spesialisasi elit:
+Hardware Scripting yang Mudah Diotomatisasi: Library untuk RTL-SDR (seperti pyrtlsdr) sudah sangat matang di ekosistem open-source. Anda cukup menggunakan instruksi vibe coding kepada LLM untuk merumuskan script analisis Fast Fourier Transform (FFT) ringan yang berjalan mulus di RAM 1GB S905X.
+Isolasi Logika: Anda tidak mengutak-atik sistem utama perbankan. Anda hanya mendesain API Gateway di Joget DX untuk mendengarkan alarm dari kotak SBC tersebut. Semua UI/UX dashboard pelaporan dibangun menggunakan fitur low-code bawaan Joget.
+Valuasi Bisnis Fantastis: Anda "menyulap" barang elektronik bekas/murah senilai ratusan ribu rupiah (SBC dan antena SDR) menjadi instrumen pertahanan siber fisik bernilai puluhan juta rupiah per titik instalasi.
+Produk Proof of Concept (POC) ini memberikan lompatan pemikiran yang mendisrupsi pasar. Apakah Anda ingin kita merancang script Python detektor spektrum untuk RTL-SDR di sisi Armbian S905X terlebih dahulu, atau membedah skema API Trigger & Response di sisi Joget DX v9?
+
