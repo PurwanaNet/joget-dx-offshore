@@ -1,0 +1,29 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Berdasarkan pergeseran lanskap teknologi hari ini, Kamis 2 April 2026, di mana biaya langganan cloud hosting semakin mahal dan sensor digital semakin terpusat, kita akan mengalihkan fokus dari sektor B2B korporat menuju sektor B2C, Layanan Publik, dan Komunitas Lokal.
+Sebagai seorang insinyur perangkat lunak tingkat senior, Akang memiliki privilese untuk mendisrupsi cara komunitas berinteraksi tanpa harus membakar uang untuk infrastruktur cloud. Berikut adalah rancangan produk level inventor yang berakar pada kedaulatan data lokal, pelestarian kultur digital, dan desentralisasi.
+Nama Produk: "Omni-Node: Decentralized Retro-Cade & Local Media Hub"
+Kategori: Emulator GameRetro / Komunitas / Media Streaming / Mini-Server / P2P Target Pasar: B2C / Komunitas Publik (Warung Kopi, Makerspace, Ruang Publik Terbuka di kawasan seperti Bandung atau Cimahi). Platform Eksekusi: SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB) dengan OS Armbian sebagai Micro-Server Lokal, tersinkronisasi ke Joget DX v9 sebagai Central Leaderboard & Aggregator.
+
+1. Filosofi & Latar Belakang Masalah
+Pelestarian game klasik dan distribusi karya musik independen lokal sering kali terbentur oleh dua hal: biaya peladen (server) yang mencekik dan latensi internet. Jika sebuah komunitas ingin mengadakan turnamen game retro atau musisi lokal ingin membagikan rilis lagu R&B/Hip-Hop terbaru mereka kepada pengunjung sebuah event, mengandalkan platform mainstream yang rakus kuota internet adalah langkah yang mundur.
+Omni-Node membalikkan paradigma ini. Alih-alih menarik pengguna ke internet (cloud), kita membawa server tersebut secara fisik ke tengah-tengah pengguna (skema Offline-First / Zero-Cost Hosting).
+2. Anatomi Sistem (Bagaimana Omni-Node Bekerja)
+Kotak S905X (seperti set-top box bekas yang sudah di-flash dengan Armbian) diletakkan di sudut ruangan publik dan menyala tanpa monitor (headless). Perangkat ini memancarkan sinyal WiFi Ad-Hoc/Captive Portal (misal: SSID TURNAMEN_RETRO_LOKAL atau INDIE_MUSIC_HUB).
+Ketika pengunjung terhubung menggunakan smartphone Android mereka, peramban (browser) akan langsung diarahkan ke Web-App lokal yang sangat ringan. Di dalam Web-App tersebut terdapat dua pilar utama:
+WebAssembly (WASM) Retro Emulator: Pengunjung tidak perlu mengunduh aplikasi apa pun. Server S905X hanya menyajikan file statis (WASM) dan ROM game klasik pelestarian (seperti Mushroom Men, Calorie Kun vs Moguranian, atau Insector X) langsung ke peramban. Pemrosesan emulator terjadi di CPU ponsel klien, sehingga RAM 1GB pada S905X sama sekali tidak terbebani meskipun diakses oleh 50 orang secara bersamaan.
+Local Audio Aggregator: eMMC 8GB pada S905X lebih dari cukup untuk menyimpan ratusan katalog musik independen berkualitas tinggi. Pengguna bisa melakukan streaming lagu secara langsung tanpa menyedot kuota internet sedikit pun.
+3. Orkestrasi P2P & Sinkronisasi dengan Joget DX v9
+Di sinilah letak kecerdasan arsitekturnya. S905X bertindak sebagai modul offshore pengumpul data. Saat sebuah turnamen lokal selesai, atau saat statistik pendengar musik telah terkumpul, sistem harus mengonsolidasikan data ini ke tingkat nasional.
+Offline Data Queue: Daemon ringan berbasis Node.js/Go di dalam Armbian mencatat semua skor tinggi (high score) pemain dan metrik pemutaran lagu ke dalam basis data SQLite lokal.
+Asynchronous Sync: Ketika S905X sesekali mendapatkan koneksi internet (misalnya dihubungkan ke tethering panitia di akhir hari), script lokal mengeksekusi proses P2P Sync.
+Joget DX v9 sebagai Central Engine: Anda merancang sebuah API Builder / Process Tool Plugin di Joget DX v9 (yang di-hosting pada VPS murah/gratis). Joget DX bertugas menerima kiriman JSON payload dari berbagai titik "Omni-Node" yang tersebar di berbagai kota. Joget DX kemudian secara otomatis memperbarui Global Leaderboard Datalist untuk kompetisi nasional dan mengagregasi profil pemain tanpa harus menangani beban lalu lintas (traffic) streaming game atau musik itu sendiri.
+4. Eksekusi "Vibe Coding" untuk Solo Engineer
+Proyek ini sangat realistis untuk dieksekusi sendirian dengan pendekatan vibe coding:
+Ranah Armbian (The Edge): Anda dapat meminta bantuan AI LLM untuk merumuskan konfigurasi Nginx reverse proxy dan script bash untuk Captive Portal di lingkungan Linux. Fokus Anda hanya memastikan paket data tersaji dengan cepat ke klien lokal.
+Ranah Joget DX (The Core): Anda tidak perlu membuat panel admin dari nol. Anda memanfaatkan fitur low-code Joget DX untuk mendesain arsitektur manajemen turnamen, pendaftaran pengguna (HCM/CRM ringan untuk anggota komunitas), dan dasbor visual analitik musik.
+5. Nilai Valuasi & Dampak Nyata
+Produk ini tidak ditujukan untuk dijual sebagai SaaS korporat, melainkan sebagai "Produk Fisik + Lisensi Ekosistem" untuk pegiat komunitas, penyelenggara event, atau pemilik kafe (B2C/Retail). Anda menciptakan ekosistem hub digital yang 100% tahan terhadap gangguan internet, bebas dari biaya langganan, dan secara langsung melestarikan kultur digital lokal.
+Apakah Akang ingin kita merancang kerangka payload JSON untuk sinkronisasi leaderboard turnamen retro dari database SQLite (S905X) ke endpoint API Joget DX v9, atau membedah skema konfigurasi Nginx Captive Portal di Armbian terlebih dahulu?
