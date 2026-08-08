@@ -1,0 +1,41 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Menjejakkan kaki di hari ini, Selasa 14 April 2026, lanskap regulasi data global dan nasional telah berubah drastis. Implementasi penuh Undang-Undang Perlindungan Data Pribadi (UU PDP) dan regulasi compliance perbankan membuat penyimpanan dokumen mentah pelanggan di satu server terpusat bukan lagi sebuah aset, melainkan bom waktu hukum bernilai triliunan rupiah.
+Sebagai arsitek sistem tingkat atas, kita harus menyadari bahwa jika sebuah bank atau BUMN mengunggah jutaan foto KTP, NPWP, atau kontrak bermeterai langsung ke server Joget DX pusat, risiko kebocoran datanya eksponensial. Jika peretas menembus database pusat, semua data mentah tersebut terekspos.
+Untuk tim beranggotakan 1 hingga 5 Senior Software Engineer, kita tidak akan membuat aplikasi antarmuka biasa. Kita akan membangun "mesin cuci" kriptografis di garis depan.
+Nama Produk: "Oblivion-Edge: Zero-Knowledge OCR & PDF Sanitization Node"
+Kategori: OCR & Doc Classifier / Hardware Firewall / CRM / Modul Microservices
+Target Pasar: B2B (Perbankan/Finance, BUMN, Penyelenggara Layanan Kesehatan/Rumah Sakit).
+Platform Eksekusi: Daemon binary (ditulis dalam Golang atau Rust) di OS Armbian pada SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), bertindak sebagai Gerbang Pra-Pemrosesan untuk platform Joget DX v9 Enterprise.
+
+1. Filosofi & Anatomi Masalah (The Inventor's Perspective)
+Dalam arsitektur Enterprise Resource Planning (ERP) atau Customer Relationship Management (CRM) konvensional, petugas di kantor cabang memindai dokumen nasabah dan langsung mengunggahnya ke server pusat.
+Secara matematis, profil risiko kerugian data ($R_{total}$) di server terpusat berbanding lurus dengan jumlah dokumen tak tersensor ($D_i$) dan probabilitas peretasan ($P_{breach}$):
+$$R_{total} = \sum_{i=1}^{n} (D_i \times P_{breach})$$
+
+
+Oblivion-Edge mengintervensi variabel $D_i$. Daripada mengamankan brankas raksasa di pusat yang terus membesar, kita "menghancurkan" nilai curiannya sejak dari pintu masuk kantor cabang.
+2. Konsep Produk: "Sanitasi di Titik Nol"
+Oblivion-Edge adalah modul perangkat keras/lunak hibrida. Papan SBC Amlogic S905X diletakkan di jaringan lokal (intranet) setiap kantor cabang perbankan atau loket administrasi rumah sakit. Alat ini tidak memiliki monitor dan beroperasi secara siluman sebagai Reverse Proxy untuk modul unggah ( upload ) Joget DX.
+Cara Kerja Pemrosesan Edge (Di Dalam RAM 1GB S905X):
+Local Intercept: Saat petugas cabang mengunggah foto KTP atau PDF Kontrak melalui peramban mereka menuju aplikasi Joget, lalu lintas data tidak langsung ke cloud. Ia dicegat oleh Oblivion-Edge secara lokal.
+Edge OCR & Entity Extraction: Di dalam S905X, pustaka Optical Character Recognition (seperti Tesseract yang sangat dioptimalkan) membaca piksel gambar.
+NLP Pattern Masking: Sebuah algoritma Regex dan pemrosesan bahasa alami (NLP) ringan mendeteksi Personally Identifiable Information (PII) tingkat tinggi: Nomor Induk Kependudukan (NIK), Nomor Kartu Kredit, Nama Gadis Ibu Kandung, atau diagnosis medis kritis.
+Permanent Pixel Redaction: Script lokal melakukan rendering ulang pada PDF/Gambar tersebut, meniban piksel asli dengan kotak hitam permanen pada area sensitif, sehingga tidak bisa di-reverse engineer.
+Metadata Payload: S905X menghasilkan satu bundel rapi: File PDF yang sudah disensor (hanya menyisakan foto wajah dan nama, misalnya) beserta file JSON berisi teks yang diekstrak.
+3. Orkestrasi Elegan dengan Joget DX v9 Enterprise
+Oblivion-Edge mengambil seluruh beban komputasi berat (OCR dan manipulasi piksel gambar) dari pundak server Joget, membiarkan Joget berfokus murni pada logika bisnis.
+API Gateway & Datalist: Server utama Joget DX v9 (yang berada di cloud atau data center pusat) hanya menerima Secure Payload dari Oblivion-Edge.
+Automated Workflow: Melalui Process Tool di Joget, JSON metadata (misal: "Nama Nasabah" dan "Skor Kredit") langsung dipetakan ke dalam variabel formulir (form data). PDF KTP yang sudah dihitamkan nomor NIK-nya disimpan sebagai arsip compliance.
+Zero-Liability CRM: Jika suatu saat server Joget DX diretas, peretas hanya akan menemukan jutaan gambar dokumen dengan kotak hitam raksasa di atas data vital. Bank klien Anda terbebas dari ancaman sanksi hukum UU PDP karena data sensitifnya tidak pernah disimpan secara utuh di server pusat.
+4. Strategi Eksekusi "Vibe Coding" (Tim 1-5 Orang)
+Proyek ini memecah monolit yang mustahil bagi tim kecil menjadi dua arena yang sangat terkontrol:
+Tim Edge/Backend (1-2 Orang): Fokus menggunakan metode vibe coding bersama LLM untuk merakit sebuah REST API Service di Armbian Linux menggunakan Golang. Golang dipilih karena kompilasi binernya sangat kecil, memori footprint-nya rendah, dan bisa mengeksekusi wrapper C++ untuk manipulasi gambar di dalam RAM 1GB tanpa crash.
+Tim Enterprise/Core (2-3 Orang): Bekerja di zona nyaman tingkat dewa menggunakan Joget DX v9. Tim ini tidak perlu menulis kode algoritma gambar. Mereka fokus menggunakan antarmuka drag-and-drop Joget untuk membuat Ticketing System Helpdesk atau alur persetujuan kredit (CRM) yang menerima umpan data dari kotak-kotak S905X tersebut.
+5. Nilai Valuasi & Model Bisnis (B2B)
+Ini adalah disrupsi "Perangkat Keras sebagai Layanan Keamanan" (Hardware-as-a-Security-Service). Anda menargetkan BUMN dan Perbankan swasta skala menengah-atas. Anda tidak menjual aplikasi CRM biasa; Anda menjual Infrastruktur Kepatuhan Regulasi (Compliance Infrastructure).
+Biaya modal (Capital Expenditure) untuk membeli satu unit SBC S905X bekas dan mem-flash OS Armbian sangatlah kecil. Namun, Anda dapat menyewakan lisensi modul Oblivion-Edge + Ekosistem Workflow Joget DX ini dengan tarif premium Enterprise per kantor cabang per bulan.
+Apakah tim ingin kita membedah skema kode Regex Masking untuk identifikasi NIK/Nomor Kartu di lingkungan Armbian Golang terlebih dahulu, atau kita rancang arsitektur JSON REST API Endpoint di dalam Joget DX v9 untuk menerima payload bersih tersebut?
+
