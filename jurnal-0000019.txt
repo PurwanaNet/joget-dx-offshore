@@ -1,0 +1,37 @@
+Memasuki minggu kerja yang baru pada hari ini, Senin 20 April 2026, kita akan merumuskan sebuah arsitektur hibrida yang mengawinkan tren terbesar saat ini (Aplikasi Gen AI & RAG) dengan realitas operasional industri berat di Indonesia.
+Setelah menyimulasikan penyisiran terhadap database konsep yang ada untuk menjamin kebaruan mutlak, saya memformulasikan satu produk berskala enterprise yang memecahkan masalah mendasar di sektor B2B (Pertambangan, Minyak & Gas, dan Perkebunan BUMN).
+Masalah terbesarnya adalah: Perusahaan ini ingin menggunakan Generative AI untuk mempercepat perbaikan alat berat berdasarkan puluhan ribu halaman Standard Operating Procedure (SOP) dan manual pemeliharaan. Namun, lokasi operasional mereka di tengah hutan atau lepas pantai tidak memiliki koneksi internet yang stabil untuk menghubungi LLM Server di cloud, dan menaruh server GPU miliaran rupiah di setiap camp pekerja adalah hal yang tidak masuk akal.
+Berikut adalah rancangan produk setingkat penemuan (invention) untuk tim engineering Anda.
+Nama Produk: "Aegis-RAG: Edge-Semantic Cache Gateway"
+Kategori: Aplikasi Gen AI (RAG / Retrieval-Augmented Generation) / SCM / IoT Edge / Modul Microservices.
+Target Pasar: B2B Kritis (Pertambangan, Energi, BUMN Infrastruktur, dan Pabrik Manufaktur).
+Platform Eksekusi: Daemon Service berbasis Golang/Rust yang di- deploy murni pada lingkungan OS Armbian Server di SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), terintegrasi penuh sebagai satelit untuk Joget DX v9 Enterprise.
+
+1. Filosofi & Anatomi Arsitektur (The Inventor's Perspective)
+Kita akan mendisrupsi cara kerja RAG konvensional. Sistem RAG biasanya melakukan scraping atau ekstraksi dinamis secara real-time saat user bertanya. Pada perangkat dengan RAM 1GB seperti S905X, komputasi dinamis atau scraping dokumen secara langsung akan menyebabkan kernel panic atau bottleneck.
+Oleh karena itu, Aegis-RAG beroperasi dengan prinsip Static Return Optimization. Alat ini memisahkan fase "Pembuatan Otak" dan "Pencarian Cepat". S905X tidak menghasilkan kalimat AI baru; ia bertindak sebagai mesin pencari semantik lokal yang sangat cepat, mengembalikan nilai statis yang sudah diproses sebelumnya.
+2. Alur Eksekusi: "The Static Edge RAG"
+Fase 1: Pusat (Joget DX v9 di Cloud/Kantor Pusat)
+Aplikasi Joget DX berfungsi sebagai Knowledge Management System. Staf pusat mengunggah PDF manual mesin berat (misal: Komatsu, Caterpillar).
+Plugin di Joget memecah (chunking) dokumen tersebut dan mengirimkannya ke AI LLM Server (seperti OpenAI atau model lokal pusat) untuk diubah menjadi angka matriks (Vector Embeddings).
+Joget DX kemudian memaketkan vektor-vektor ini ke dalam sebuah berkas basis data SQLite statis yang sangat terkompresi.
+Fase 2: Sinkronisasi ke Ujung (Amlogic S905X Armbian)
+Berkas SQLite statis berukuran kecil (misal 50-100MB) tersebut didistribusikan ke unit-unit S905X yang terpasang di jaringan intranet site tambang.
+S905X ini bekerja menggunakan OS Armbian yang sangat ramping, tanpa beban overhead antarmuka GUI.
+Fase 3: Pengambilan Keputusan Offline (The Local Vector Search)
+Seorang mekanik di lapangan mengalami masalah mesin. Menggunakan aplikasi mobile internal yang terhubung ke jaringan WiFi lokal (tanpa internet), ia mengetik: "Tekanan hidrolik drop saat ekskavator mengangkat beban."
+Aplikasi menembak API lokal ke S905X.
+Service Golang di dalam S905X dengan cepat mengubah teks tersebut menjadi vektor (menggunakan model embedding kuantisasi super ringan di dalam RAM), lalu menghitung jarak kedekatan makna menggunakan rumus Cosine Similarity terhadap basis data statis:
+$$similarity = \cos(\theta) = \frac{\mathbf{A} \cdot \mathbf{B}}{\|\mathbf{A}\| \|\mathbf{B}\|}$$
+
+Hasil Instan: S905X langsung memberikan return value statis berupa teks solusi presisi dari halaman manual yang tepat, dalam hitungan milidetik, tanpa perlu melakukan scraping data ke luar jaringan.
+3. Strategi "Vibe Coding" untuk Tim Kecil (1-5 Engineer)
+Proyek ini sangat ideal untuk dieksekusi oleh 1-5 Senior Software Engineer dengan bantuan AI/LLM sebagai co-pilot (vibe coding), karena setiap komponen berdiri sendiri (microservices):
+Engineer 1 (The Edge Hacker): Membangun microservice pencarian vektor di Armbian menggunakan Golang atau Rust. Instruksi vibe coding dapat difokuskan pada manipulasi SQLite Vector dan optimasi penggunaan RAM agar tidak melebihi alokasi perangkat keras.
+Engineer 2 & 3 (The Joget Architects): Membangun kerangka portal SCM dan manajemen aset di Joget DX v9. Mereka mengembangkan plugin khusus yang mengekspor Form Data dan PDF menjadi Vector Map setiap kali ada dokumen SOP baru yang disahkan oleh manajemen.
+Engineer 4 & 5 (The Client Interface): Membuat PWA (Progressive Web App) atau aplikasi Android sederhana untuk perangkat teknisi lapangan yang langsung "berbicara" dengan IP Address lokal dari unit S905X.
+4. Nilai Komersial & Valuasi B2B
+Ini adalah produk bernilai miliaran rupiah dengan modal perangkat keras (CAPEX) puluhan ribu rupiah. Anda tidak menjual aplikasi; Anda menjual "Kecerdasan Buatan Tanpa Sinyal".
+Perusahaan tambang dapat menghemat miliaran rupiah dari waktu henti (downtime) alat berat, karena mekanik mereka mendapatkan solusi secara instan tanpa perlu berjalan mencari sinyal internet satelit, dan perusahaan tidak perlu cemas data teknis rahasia mereka dikirim ke peladen pihak ketiga. Ekosistem Joget DX di kantor pusat tetap menjadi pemegang kendali penuh atas informasi yang mengalir ke lapangan.
+Melihat arsitektur yang mengutamakan kecepatan pencarian statis ini, apakah Anda ingin kita mendalami rancangan struktur tabel basis data pada sisi Joget DX v9 untuk manajemen chunking dokumen, atau kita bedah logika kompilasi bahasa pemrograman tingkat rendahnya agar berjalan mulus di atas arsitektur prosesor ARM unit S905X tersebut?
+
