@@ -1,0 +1,46 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+Menyongsong siang di hari Selasa, 28 April 2026 ini, dengan mengamati dinamika transformasi digital di sektor Layanan Publik (terutama di area regional Jawa Barat dan sekitarnya), kita dihadapkan pada satu tantangan infrastruktur yang ironis: "Paradoks Aksesibilitas Pengetahuan".
+Pemerintah Daerah, Kelurahan, hingga fasilitas Layanan Publik lokal ingin menyediakan asisten AI 24/7 bagi warganya untuk menjawab pertanyaan seputar regulasi (syarat KTP, BPJS, perizinan, atau alur layanan). Namun, mereka terbentur dua hal:
+Menggunakan layanan Cloud LLM (OpenAI/Gemini) memerlukan biaya token berlangganan yang terus menguras Anggaran Pendapatan dan Belanja Daerah (APBD), serta bergantung penuh pada koneksi internet yang sering tidak stabil di balai desa atau kantor lokal.
+Membangun server lokal dengan GPU mumpuni membutuhkan biaya ratusan juta rupiah, yang melanggar prinsip "anggaran rendah/tanpa biaya hosting mahal".
+Sebagai arsitek sistem, kita akan memecahkan paradoks ini dengan merekayasa ulang arsitektur Retrieval-Augmented Generation (RAG) konvensional. Kita akan memindahkan beban komputasi terberat ke server pusat, dan mendistribusikan "otak penelusuran"-nya ke perangkat keras bekas di ujung jaringan.
+Berikut adalah rancangan produk setingkat inventor untuk dieksekusi oleh tim inti Anda.
+Nama Produk: "Praja-RAG: P2P Edge-Vector Mesh & Localhost GenAI Kiosk"
+Kategori: Aplikasi Gen AI (RAG) / SLM Server / P2P (Peer-to-Peer) / PWA / Layanan Publik.
+Target Pasar: B2C / Layanan Publik (Balai Desa, Kelurahan, Puskesmas, Pusat Informasi Publik tingkat lokal).
+Platform Eksekusi: Daemon binary C++ (llama.cpp) & SQLite-VSS (Vector Search) di OS Armbian pada SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), tersinkronisasi P2P dengan platform induk Joget DX v9 Enterprise.
+
+1. Filosofi & Anatomi Arsitektur (The Inventor's Perspective)
+Sistem RAG konvensional melakukan dua proses berat sekaligus: Mengubah teks menjadi angka (Embedding) dan menghasilkan teks bahasa alami (LLM Generation). Memaksa RAM 1GB pada S905X untuk melakukan keduanya sekaligus saat pengguna bertanya akan menyebabkan Out of Memory (OOM).
+Praja-RAG menggunakan arsitektur "Asymmetric Vector Offloading".
+Kita memisahkan proses Embedding (dilakukan di server Joget DX) dan proses Retrieval & Generation (dilakukan di localhost S905X tanpa internet).
+2. Alur Eksekusi: "The Offline Semantic Pipeline"
+Fase 1: Ingesti Dokumen & Pre-Computing di Joget DX v9 (The Master Brain)
+Staf Pemda di tingkat Kabupaten/Provinsi mengunggah file PDF regulasi baru (misal: "SOP Pembuatan Surat Tanah 2026.pdf") ke portal Joget DX v9.
+Process Tool Plugin kustom di Joget akan mengekstraksi teks dari PDF tersebut, lalu melakukan Chunking (memecah teks menjadi paragraf kecil).
+Di server pusat inilah proses Embedding terjadi (mengubah paragraf menjadi representasi vektor numerik dimensi tinggi).
+Joget DX tidak mengirimkan file PDF ke perangkat lokal. Joget hanya mendistribusikan database SQLite ringan yang berisi array vektor dan teks asli via protokol P2P (Peer-to-Peer) ke ratusan unit S905X di seluruh balai desa.
+Fase 2: Pencarian Vektor Lokal di S905X (The Edge Retrieval)
+Di Balai Desa, S905X menyala sebagai server localhost. Warga terhubung ke jaringan WiFi dari S905X (tanpa kuota internet) dan membuka antarmuka Progressive Web App (PWA) di peramban ponsel mereka.
+Warga mengetik: "Apa syarat bikin surat pindah?"
+S905X menggunakan model embedding statis ultra-ringan (seperti all-MiniLM-L6-v2 berukuran ~80MB) yang diload ke RAM untuk mengubah pertanyaan tersebut menjadi Vektor Kueri ($Q$).
+Daemon lokal melakukan Cosine Similarity langsung di SQLite-VSS untuk mencari konteks dokumen ($D$) yang paling relevan secara matematis:
+$$\text{Similarity}(Q, D) = \frac{Q \cdot D}{\|Q\| \|D\|} = \frac{\sum_{i=1}^{n} Q_i D_i}{\sqrt{\sum_{i=1}^{n} Q_i^2} \sqrt{\sum_{i=1}^{n} D_i^2}}$$
+
+Proses ini memakan waktu kurang dari 200 milidetik di Amlogic S905X.
+Fase 3: Generasi Bahasa Offline (SLM Generation)
+Setelah paragraf SOP ditemukan (misal: "Syarat pindah: KTP dan KK"), S905X mengumpankan konteks ini beserta pertanyaan warga ke dalam Small Language Model (SLM) berparameter sangat rendah.
+Kita menggunakan model seperti Qwen1.5-0.5B-Chat atau TinyLlama yang telah dikuantisasi ekstrem (format GGUF Q4_K_M). Model ini dieksekusi murni oleh CPU S905X menggunakan llama.cpp.
+AI menjawab dalam bahasa Indonesia yang natural: "Untuk membuat surat pindah, Bapak/Ibu perlu membawa KTP asli dan Kartu Keluarga ke loket 2." Semua terjadi 100% offline, nol latensi jaringan eksternal.
+3. Strategi "Vibe Coding" untuk Tim Kecil (1-5 Engineer)
+Proyek ini membedah batas rekayasa komputasi ujung, sangat ideal untuk vibe coding terstruktur:
+Engineer 1 & 2 (The Edge RAG Hackers): Fokus di lingkungan Linux ARM64 (Armbian). Mereka menggunakan LLM co-pilot untuk merakit binary mandiri yang menggabungkan server HTTP (Golang/Rust), SQLite-VSS untuk penelusuran vektor, dan pengikatan C++ ke llama.cpp. Misi utama mereka: memastikan seluruh pipeline lokal menghabiskan RAM maksimum 800MB.
+Engineer 3 (The P2P & PWA Integrator): Menulis logika P2P sederhana (mengadopsi konsep rsync atau IPFS lokal) agar ketika S905X di desa sesekali terhubung ke internet, ia langsung menarik database vektor terbaru dari simpul terdekat atau dari server pusat. Engineer ini juga merancang UI PWA gaya chat yang ringan.
+Engineer 4 & 5 (The Enterprise Architects): Fokus penuh di ekosistem Joget DX v9. Membangun App Manajemen Dokumen, mengonfigurasi API Builder, dan merancang Form untuk Dasbor Pemda yang memonitor status kesehatan (uptime) dari setiap unit Praja-RAG yang tersebar di pelosok.
+4. Nilai Disrupsi B2C/Layanan Publik (Valuasi & ROI)
+Solusi ini memberikan otonomi digital absolut. Dengan berbekal Amlogic S905X bekas yang diformat ulang (modal per unit di bawah Rp250.000), Anda menciptakan "Kios AI Desa Pintar".
+Pemerintah Daerah tidak perlu lagi membayar tagihan hosting cloud AWS/GCP bulanan yang membengkak atau memikirkan langganan API OpenAI. Anda menjual produk ini sebagai B2G (Business to Government) Perpetual License Architecture. Pemerintah membeli perangkat keras Praja-RAG dari Anda, sekaligus melisensikan modul Backend RAG Governor di Joget DX pusat untuk mengelola pembaruan knowledge base-nya. Ini menyelesaikan masalah Layanan Publik secara elegan, massal, dan sangat terjangkau.
+Melihat topologi yang membagi beban komputasi gen-AI ini, apakah tim ingin kita mendalami draf arsitektur kompilasi extensi SQLite-VSS agar kompatibel dengan arsitektur ARMv8 di S905X terlebih dahulu, atau mematangkan skema payload untuk proses distribusi file basis data vektor dari Plugin Joget DX?
+
