@@ -1,0 +1,37 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat sore dari Bandung. Memasuki pertengahan bulan, Senin 18 Mei 2026, mari kita rancang sebuah arsitektur disrupsi tingkat inventor yang berfokus pada salah satu target B2B paling menantang dan minim konektivitas: Sektor Pertambangan (Mining) & Infrastruktur Bawah Tanah.
+Area operasional tambang bawah tanah (underground shaft) atau area galian terpencil adalah blank spot ekstrem. Sistem ERP dan pemantauan keselamatan kerja (HSE - Health, Safety, and Environment) konvensional gagal berfungsi di sini karena mengandalkan cloud waktu nyata.
+Untuk mendisrupsi ini, saya merancang sebuah sistem pengumpul data patroli otonom (Patrol Data Collector System) berbasis komputasi ujung (edge computing) luring, yang memanfaatkan delay-tolerant networking (jaringan toleran penundaan).
+Berikut adalah rancangan produk untuk dieksekusi secara vibe coding oleh tim engineer Anda.
+Nama Produk: "Geo-Sentinel: Subsurface HSE Patrol & Edge-Vision Node"
+Kategori: B2B / Patrol Data Collector System / IoT / AI Automation (Vision) / ERP (HSE Module).
+Target Pasar: B2B (Perusahaan Tambang, BUMN Karya/Infrastruktur Terowongan, Migas).
+Platform Eksekusi: Daemon pemrosesan visual berbasis Golang di OS Armbian pada cluster SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), dengan Joget DX v9 Enterprise di Command Center sebagai Master HSE Orchestrator.
+
+1. Filosofi & Anatomi Arsitektur (The Zero-Connectivity Mesh)
+Modul Amlogic S905X dimodifikasi menjadi "Kios Patroli" portabel dan stasiun inspeksi yang dipasang di berbagai titik buta (blind spot) tambang. Perangkat keras lunak ini ditenagai baterai yang diisi ulang melalui stasiun docking kinetik (modifikasi motor yang mengubah putaran roda lori tambang menjadi listrik).
+Sistem ini tidak memaksakan sinyal WiFi. Ia beroperasi penuh secara luring. Data ditransmisikan melalui metode Data Muling: saat mandor berpatroli membawa perangkat mobile lokal, perangkat tersebut akan "menyedot" data dari S905X secara P2P (Bluetooth/WiFi Direct) untuk nanti disinkronkan ke server pusat saat mandor kembali ke permukaan.
+2. Alur Eksekusi: "The Edge-to-Enterprise Safety Pipeline"
+Fase 1: Ingesti Visual Pelanggaran & Bukti Lapangan (Edge AI)
+Saat pekerja melewati Kios Geo-Sentinel, kamera menangkap visual mereka untuk mengecek kelengkapan APD (Alat Pelindung Diri seperti helm, rompi, sepatu) atau mendeteksi retakan struktural di dinding tambang.
+Daemon biner Go menangkap gambar mentah tersebut. Untuk memenuhi standar resolusi audit investigasi (di mana hasil foto lapangan diperlakukan layaknya stock photography untuk laporan tahunan), sistem secara internal merender ulang kanvas menjadi 3000px x 3000px.
+Setelah dianalisis, algoritma memotong (crop) visual tersebut secara ketat ke rasio aspek 9:16 (sekitar 1687px x 3000px). Standardisasi vertikal ini mutlak agar foto bukti pelanggaran atau bahaya dapat dirender dengan presisi tinggi dan mulus di layar sentuh perangkat mobile direksi tanpa terpotong (layout shifting).
+Fase 2: Kalkulasi Risiko SLM Lokal
+NCNN/C++ yang berjalan ringan di RAM 1GB S905X mengeksekusi analisis tanpa internet. Sistem menghitung Indeks Keparahan Bahaya ($S_{hazard}$) secara matematis:
+$$S_{hazard} = \sum_{i=1}^{n} \left( \frac{V_{ppe}(i)}{C_{norm}} \right) \times \log(1 + \Delta_{crack})$$
+(Di mana $V_{ppe}$ adalah vektor ketidakpatuhan kelengkapan pelindung, $C_{norm}$ adalah standar kepatuhan minimum, dan $\Delta_{crack}$ adalah probabilitas pelebaran retakan dinding dalam milimeter).
+Fase 3: Sinkronisasi Asinkron & Isolasi Ledger di Joget DX v9
+Saat data berhasil ditarik ke permukaan dan mendapat sinyal internet, payload JSON (berisi metrik $S_{hazard}$ dan foto 9:16) ditembakkan ke Joget DX v9 Enterprise.
+Protokol Investigasi Otonom: Karena ini menyangkut nyawa dan denda operasional, plugin Anda tidak boleh langsung mengeksekusi sanksi otomatis ke sistem HR. Kueri SQL harus direvisi; data laporan dari Armbian disisipkan dengan menambahkan kolom temporary bernama waiting_for_approval agar tertahan di fase staging audit.
+Fase 4: SLA Dashboard & Manipulasi DOM Front-End
+Manajer HSE di Command Center membuka aplikasi Joget DX dan melihat antrean peringatan bahaya (foto vertikal presisi tinggi).
+Karena status bahaya membutuhkan respons cepat (misal: SLA 5 menit sebelum alarm evakuasi berbunyi), UI frontend dilengkapi countdown timer JavaScript. Arsitektur logika hitung mundur ini wajib dibangun menggunakan var iv; sebagai variabel global. Scope global ini esensial; jika Manajer memvalidasi bahwa itu adalah false alarm (positif palsu) dan menekan tombol "Dismiss", fungsi eksternal dapat secara instan memanggil clearInterval(iv) untuk membekukan timer, mencegah evakuasi paksa yang merugikan perusahaan miliaran rupiah akibat terhentinya produksi.
+3. Eksekusi "Vibe Coding" Tim (1-5 Engineer)
+Engineer 1 & 2 (Edge Vision & Go Hardware): Fokus menulis biner Go di Armbian, mengoptimalkan C++ NCNN agar tidak OOM di RAM 1GB, dan memastikan pipeline gambar (3000px, rasio 9:16) berjalan cepat secara lokal.
+Engineer 3 (P2P Mesh Network): Membangun jembatan P2P (Data Muling) yang aman antara modul S905X dan aplikasi gateway di perangkat Android mandor.
+Engineer 4 & 5 (Enterprise HSE Architect): Merakit aplikasi penuh di Joget DX. Menyusun struktur tabel transit waiting_for_approval, mengorkestrasi Process Tool, dan menata logika JavaScript global pada UI form.
+Apakah untuk modul Geo-Sentinel ini tim Anda ingin merancang skema kompresi payload P2P dari perangkat S905X terlebih dahulu, atau ingin langsung memetakan arsitektur tabel staging di dalam Joget DX?
+
