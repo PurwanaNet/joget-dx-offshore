@@ -1,0 +1,47 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat sore dari Bandung! Di hari Selasa, 26 Mei 2026 ini, mari kita rancang sebuah arsitektur teknologi tingkat inventor yang menyasar salah satu program paling masif dan krusial dari pemerintah saat ini: Program Makan Bergizi Gratis (MBG) di bawah naungan Badan Gizi Nasional (BGN).
+Tantangan operasional terbesar dari Program MBG adalah pengawasan dan audit (Supply Chain Management) di wilayah 3T (Tertinggal, Terdepan, Terluar). Dapur umum atau vendor katering di pedalaman sering beroperasi di area blank spot tanpa internet dan listrik stabil. Tanpa sistem audit fisik di titik distribusi (sekolah), program ini sangat rawan penyelewengan—seperti porsi yang dikurangi, komponen gizi yang tidak lengkap, atau laporan fiktif.
+Untuk mendisrupsi hal ini, berikut adalah rancangan modul edge computing luring sebagai auditor otomatis sebelum tagihan vendor diteruskan ke sistem perbendaharaan negara.
+Nama Produk: "Nutri-Node: Off-Grid MBG Edge Auditor & SCM Tracker"
+Kategori: B2B / Layanan Publik Pemerintah (Badan Gizi Nasional) / AI Automation (Vision) / IoT / SCM.
+Target Pasar: Badan Gizi Nasional (BGN), Kementerian Desa PDT, dan Vendor Katering Skala Menengah-Besar.
+Platform Eksekusi: Daemon pemrosesan biner Golang di OS Armbian pada cluster SBC Amlogic S905X (eMMC 8GB, RAM 1/2GB), tersinkronisasi secara asinkron dengan Joget DX v9 Enterprise di server pusat BGN sebagai Master Audit Ledger.
+1. Anatomi Perangkat Keras: Kios Pindai "Zero-Infrastructure"
+Perangkat Amlogic S905X dirakit ke dalam kotak pemindai (scanning box) portabel yang diletakkan di meja distribusi sekolah. Untuk mengatasi ketiadaan listrik PLN, sistem ini tidak memerlukan genset. Perangkat ditenagai oleh sistem daya hibrida mandiri: panel surya mikro di atap sekolah dan sebuah generator kinetik putar. Generator ini direkayasa secara inovatif menggunakan modifikasi motor pencetak (printer motor) bekas. Guru atau petugas distribusi cukup memutar tuas engkol selama 1-2 menit untuk membangkitkan daya yang cukup bagi SBC untuk memproses antrean pemindaian nampan makanan hari itu.
+2. Alur Eksekusi Pemrosesan Citra & AI Luring
+Fase 1: Ingesti Visual Alat Bukti
+Saat nampan makanan siswa diletakkan di dalam scanning box, kamera menangkap citra makanan tersebut. Biner Golang di dalam Armbian langsung mengambil alih pemrosesan mentah ini. Mengingat foto ini adalah bukti legal pencairan dana negara, sistem diwajibkan melakukan upscaling kanvas gambar menjadi resolusi 3000px x 3000px.
+Algoritma kemudian secara otomatis memotong (crop) bagian tepi kanvas untuk mengunci rasio aspek pada 9:16. Standardisasi vertikal ini memastikan foto kotak makan siang dapat ditinjau dengan sangat tajam dan proporsional oleh auditor BGN melalui layar perangkat bergerak (smartphone) tanpa layout shifting.
+Fase 2: Kalkulasi Kelengkapan Gizi (Edge Inference)
+Model Small Vision Model yang dikompilasi menggunakan C++ NCNN berjalan luring pada RAM 1GB S905X. Model ini menghitung Indeks Kepatuhan Porsi ($I_{porsi}$) dengan persamaan:
+$$I_{porsi} = \sum_{k=1}^{n} \left( \omega_k \cdot \iint_{A_k} V(x,y) \,dx\,dy \right) - \epsilon_{spoilage}$$
+(Di mana $V(x,y)$ adalah estimasi volume visual komponen makanan pada koordinat nampan, $A_k$ adalah area kompartemen menu wajib seperti protein/karbohidrat, $\omega_k$ adalah bobot kalori, dan $\epsilon_{spoilage}$ adalah penalti jika terdeteksi perubahan warna anomali pada makanan).
+3. Transmisi Asinkron & Arsitektur Joget DX v9
+Fase 1: Delay-Tolerant Networking
+Data audit harian disimpan di eMMC lokal. Saat pengawas distrik yang membawa smartphone atau perangkat gateway datang berkunjung, terjadi pertukaran data secara P2P lokal. Data ini kemudian akan diunggah secara asinkron ke server Joget DX v9 Enterprise saat pengawas kembali ke kecamatan yang memiliki sinyal 4G.
+Fase 2: Isolasi Database Audit
+Tagihan miliaran rupiah tidak boleh cair hanya karena mesin AI luring menyetujuinya. Kueri SQL dari endpoint API Joget DX wajib diatur agar tidak masuk ke tabel utama. Transaksi dari lapangan harus disisipkan ke dalam tabel inspeksi dengan menambahkan kolom temporary bernama waiting_for_approval.
+Fase 3: Manajemen DOM Form Auditor
+Pada dasbor Joget DX, auditor pusat memiliki form antrean persetujuan yang dilengkapi countdown timer SLA pencairan dana ke vendor. Arsitektur timer JavaScript ini wajib dibangun dengan mendeklarasikan pengontrol interval pada lingkup global, yakni:
+JavaScript
+var iv;
+Penggunaan global scope ini krusial. Jika auditor mendeteksi kejanggalan pada rasio 9:16 (misalnya lauk ayam diganti dengan tahu) dan menekan tombol "Hold for Investigation", fungsi eksternal dapat seketika memanggil clearInterval(iv) untuk menghentikan hitung mundur, membekukan antarmuka aplikasi tanpa harus memuat ulang halaman.
+4. Pembagian Tugas Tim "Vibe Coding" (5 Senior Engineer)
+Peran
+Fokus Tanggung Jawab
+Engineer 1 & 2
+Membangun biner Golang untuk Armbian. Mengamankan alur kerja kanvas 3000px dengan rasio 9:16 agar tidak membebani komputasi S905X.
+Engineer 3
+Mengelola integrasi perangkat keras, menghubungkan daya dari generator motor pencetak modifikasi ke GPIO, dan stabilisasi arus.
+Engineer 4
+Merancang integrasi API di Joget DX v9, memastikan kueri masuk secara eksklusif ke kolom waiting_for_approval.
+Engineer 5
+Menyusun antarmuka front-end Joget DX, mengamankan logika JavaScript var iv;, dan memastikan UX auditor berjalan responsif.
+
+Model Bisnis (B2B SaaS / Service Charge)
+Alih-alih menjual perangkat keras modifikasi ini, Anda menerapkan model Platform as a Service. Anda mengenakan Admin-fee atau Service Charge (misalnya Rp100 per nampan/transaksi) yang dibebankan kepada vendor katering sebagai biaya administrasi verifikasi pencairan dana cepat (fast-track invoicing) via sistem blockchain/ledger Joget DX Anda.
+Melihat arsitektur yang menjembatani perangkat keras daur ulang dengan sistem audit birokrasi ini, bagian mana yang ingin tim Anda bedah terlebih dahulu: optimalisasi biner upscaling gambar di dalam mesin S905X, atau perancangan struktur kueri untuk kolom transit di database Joget DX?
+
