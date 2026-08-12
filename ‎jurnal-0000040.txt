@@ -1,0 +1,87 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat siang dari Bandung! Bertepatan dengan hari Kamis, 21 Mei 2026, mari kita bedah sebuah rancangan arsitektur sistem tingkat tinggi yang disiapkan khusus untuk menghadapi pengetatan regulasi audit aset fisik dan dokumen jaminan di sektor keuangan mikro nasional.
+Di tengah akselerasi digitalisasi perbankan, Otoritas Jasa Keuangan (OJK) dan Bank Indonesia semakin memperketat regulasi kepatuhan (compliance) terkait validasi fisik agunan (seperti sertifikat tanah, BPKB, dan dokumen identitas fisik) pada jaringan Bank Perkreditan Rakyat (BPR) dan Lembaga Keuangan Mikro (LKM) di daerah pelosok. Masalahnya, kantor kas sub-cabang di wilayah terpencil kerap mengalami kendala blank spot internet kronis dan pemadaman listrik, membuat verifikasi cloud waktu nyata (real-time) menjadi mustahil. Akibatnya, pemalsuan cetakan dokumen agunan sering lolos dari pemeriksaan manual.
+Untuk mengatasi celah sistemik ini, saya merancang sebuah modul forensik dokumen ujung (edge forensic) luring yang bertindak sebagai pos terdepan penyaringan fraud keuangan sebelum masuk ke sistem inti perbankan (Core Banking System).
+Nama Produk: "Aura-Secure: Edge Document Forensic Ledger & RegTech Staging Node"
+Kategori: B2B Fintech & RegTech / OCR & Document Info Extractor / AI Automation / Hardware IoT & Edge Computing.
+Target Pasar: B2B Perbankan (Bank BUMN Klaster Mikro, Perbankan Syariah, BPR Daerah, Agen Laku Pandai).
+Platform Komputasi: Daemon pemrosesan biner Golang di OS Armbian pada Single Board Computer (SBC) ber-chipset Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), terintegrasi secara asinkron dengan Joget DX v9 Enterprise di server pusat sebagai Master Compliance Dashboard.
+### 1. Filosofi Infrastruktur & Resiliensi Energi (The Off-Grid Darkbox)
+Modul Amlogic S905X dikonfigurasi menjadi sebuah kios pemindai tak-berjaringan (off-grid kiosk) portabel berbentuk kotak gelap (darkbox camera rig). Mengingat keterbatasan pasokan daya di pelosok, perangkat ini didesain menggunakan sistem daya hibrida independen:
+Suplai Utama: Panel surya mikro berdaya rendah untuk pengisian baterai internal di siang hari.
+Suplai Darurat: Modul generator kinetik mekanis yang memanfaatkan modifikasi motor pencetak (printer motor) bekas yang dihubungkan ke tuas engkol manual. Petugas kasir cukup memutar tuas tersebut selama 1–2 menit untuk membangkitkan induksi listrik mikro yang cukup untuk mentenagai siklus komputasi penuh SBC S905X saat cuaca mendung total.
+### 2. Arsitektur Alur Kerja Data (Edge-to-Enterprise Pipeline)
+[Dokumen Fisik] 
+       │ (Kamera USB + Darkbox Rig)
+       ▼
+[Armbian SBC S905X (Golang)] ──► Upscale (3000px) & Crop (9:16) ──► Inferensi SLM Luring
+       │ 
+       │ (Sync Asinkron via Data Muling / P2P Mesh)
+       ▼
+[Joget DX v9 Enterprise] ──► Injeksi SQL Table (waiting_for_approval) ──► UI Global Scope Monitor
+Fase 1: Ingesti Citra Makro & Standarisasi Kanvas
+Petugas meletakkan dokumen jaminan atau identitas ke dalam darkbox rig. Kamera USB makro yang terhubung ke port S905X menangkap tekstur serat kertas dan tanda air (watermark).
+Daemon internal berbasis Go menangkap raw image tersebut. Untuk memastikan detail mikroskopis atau cetakan palsu dapat dianalisis oleh tim auditor di pusat, sistem secara instan melakukan upscaling kanvas gambar menjadi resolusi 3000px x 3000px.
+Hasil render resolusi tinggi tersebut kemudian dipotong (crop) secara otomatis mengikuti matriks simetris dengan rasio aspek vertikal 9:16 (sekitar 1687px x 3000px). Penguncian rasio 9:16 ini merupakan standar mutlak agar tata letak visualisasi dokumen dapat ditinjau secara ergonomis pada perangkat smartphone tim legal bank tanpa distorsi atau layout-shifting.
+Fase 2: Analisis Fitur & Skor Koherensi Serat Luring (SLM)
+Tanpa bergantung pada jaringan luar, pustaka C++ NCNN yang berjalan di atas sistem operasi Armbian mengolah citra gambar tersebut untuk menghitung Indeks Koherensi Autentisitas Serat ($I_{cas}$):
+$$I_{cas} = \left( \frac{\iint_{D} \nabla^2 I(x,y) \,dx\,dy}{\text{Area}(D)} \right) \times \log_2 \left( 1 + \frac{\text{Contrast}_{uv}}{\text{Contrast}_{white}} \right)$$
+(Di mana $I(x,y)$ merepresentasikan intensitas piksel pada koordinat kanvas dokumen, $D$ adalah domain area fitur pengaman mikro, dan Rasio Kontras mengukur pendaran fluoresensi di bawah pencahayaan UV kompartemen). Jika nilai $I_{cas}$ berada di bawah ambang batas deviasi aman, dokumen ditandai sebagai "High Suspect of Counterfeit".
+Fase 3: Sinkronisasi Jaringan Tertunda & Isolasi Ledger Database
+Ketika kurir logistik bank atau kendaraan operasional yang membawa perangkat jembatan data datang berkunjung (berfungsi sebagai Data Mule), modul S905X mengekspor paket data terenkripsi via koneksi P2P lokal. Data ini kemudian diunggah ke server pusat Joget DX v9 Enterprise saat kurir mendapatkan sinyal.
+Demi menjaga integritas sistem informasi utama perbankan dari data mentah luring, plugin kustom Joget DX dilarang keras langsung melakukan perubahan pada tabel data agunan aktif. Struktur kueri SQL dimodifikasi secara ketat untuk mengisolasi baris data baru ke dalam tabel penampungan sementara dengan menyisipkan kolom khusus:
+SQL
+ALTER TABLE app_fd_forensic_logs ADD COLUMN waiting_for_approval VARCHAR(50) DEFAULT 'PENDING_AUDIT';
+Fase 4: Manajemen State UI Form via Frontend Global Scope Guard
+Pada konsol peninjauan di Joget DX v9, tim analis kepatuhan pusat bertugas memvalidasi berkas masuk. Karena regulasi OJK menuntut batas waktu respon peninjauan (SLA) yang ketat agar pencairan kredit tidak tertunda lama, antarmuka form dilengkapi dengan modul hitung mundur (countdown timer).
+Dalam perancangan kode JavaScript pada komponen form builder Joget, variabel pengontrol interval wajib dideklarasikan pada lingkup global (global scope) menggunakan struktur penamaan berikut:
+JavaScript
+// Dideklarasikan di global scope jendela aplikasi
+var iv; 
+
+function startForensicCountdown(durationInSeconds) {
+    // Memastikan interval sebelumnya dibersihkan secara total untuk mencegah memory leak
+    if (typeof iv !== 'undefined') {
+        clearInterval(iv);
+    }
+    
+    var timer = durationInSeconds;
+    iv = setInterval(function () {
+        var minutes = parseInt(timer / 60, 10);
+        var seconds = parseInt(timer % 60, 10);
+
+        document.getElementById('sla_timer_display').innerText = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+
+        if (--timer < 0) {
+            clearInterval(iv);
+            triggerAutoRoutingToEscalation();
+        }
+    }, 1000);
+}
+
+function stopAuditTimerForInvestigation() {
+    // Dipanggil dari tombol aksi luar atau event trigger intervensi analis
+    if (iv) {
+        clearInterval(iv);
+        console.log("[Aura-Secure] Timer frozen. Document locked for manual physical verification.");
+    }
+}
+Dengan menempatkan var iv; di ranah global, fungsi intervensi dari luar fungsi hitung mundur utama dapat langsung memanggil clearInterval(iv) kapan saja saat auditor mendeteksi keanehan pada foto vertikal 9:16 tersebut, membekukan sistem agar tidak terjadi salah rute otomatis (auto-reject).
+### 3. Skema Kolaborasi Tim "Vibe Coding" (1-5 Senior Engineer)
+Proyek ini sangat ramping dan dapat dieksekusi secara simultan menggunakan AI-assisted perancangan kode:
+Peran
+Fokus Area Kerja
+Engineer 1 & 2 (Embedded Go & Low-Level Vision)
+Membangun biner kompilasi Go di Armbian, optimalisasi pemrosesan citra makro (3000px, aspek rasio 9:16), serta integrasi driver pencahayaan UV/White-light box.
+Engineer 3 (Protocol Mesh & Security)
+Menangani enkripsi paket data di eMMC local, manajemen penyimpanan data lokal agar tidak melebihi 8GB, dan protokol jabat tangan P2P (Data Muling).
+Engineer 4 & 5 (Enterprise Workflow & UI/UX)
+Merancang arsitektur aplikasi pengesahan di Joget DX v9, mereset kueri transaksi ke tabel khusus waiting_for_approval, dan mengamankan injeksi skrip global scope timer di frontend.
+
+### 4. Model Bisnis Monetisasi (Transaction-Based Admin Fee)
+Model bisnis yang diterapkan adalah skema offshore infrastructure-as-a-service (IaaS/SaaS). Tim pengembang tidak menjual unit komputasi secara putus, melainkan menyewakan modul terintegrasi ini ke ekosistem perbankan. Anda menerapkan biaya penanganan (Service Charge / Admin-fee) bernilai tetap (misal: Rp500 hingga Rp1.000) untuk setiap siklus dokumen agunan yang berhasil dipindai, dianalisis secara forensik di sisi edge, dan divalidasi keasliannya melalui gerbang dasbor Joget DX v9.
+Mengingat kompleksitas integrasi dari perangkat komputasi hemat daya hingga sistem dasbor terpusat ini, bagian manakah yang ingin diuraikan oleh tim Anda terlebih dahulu? Apakah kita akan memformulasikan biner optimasi pengolahan citra kanvas di Golang Armbian, atau menyusun skema relasi tabel database waiting_for_approval dalam arsitektur Joget DX?
+
