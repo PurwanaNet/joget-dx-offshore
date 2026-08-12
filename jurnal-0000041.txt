@@ -1,0 +1,40 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat siang dari Bandung! Merespons tantangan disrupsi untuk hari ini, Jumat 22 Mei 2026, mari kita rancang sebuah arsitektur tingkat inventor yang menyasar salah satu momentum ekonomi paling krusial dan rawan krisis: Masa Transisi Redenominasi Rupiah.
+Jika kebijakan pemotongan nilai nol pada Rupiah dieksekusi, perbankan nasional (terutama Bank Perkreditan Rakyat/BPR di daerah terpencil) dan gerai ritel akan menghadapi kekacauan sirkulasi. Uang lama dan uang baru akan beredar bersamaan, membuka celah masif bagi peredaran uang palsu di wilayah blank spot yang tidak terjangkau verifikasi cloud waktu nyata (real-time).
+Untuk memitigasi hal ini, saya merancang sebuah perangkat edge-AI luring yang ditenagai oleh model klasifikasi terdesentralisasi.
+Nama Produk: "Rupiah-X Edge: Redenomination Validator & Qubic-Inference Node"
+Kategori: B2B Perbankan/Fintech / AI Automation (Vision/Classification) / Hardware IoT / POS Terminal.
+Target Pasar: Bank Indonesia, Jaringan BPR Daerah, Agen Laku Pandai, dan Koperasi Unit Desa (KUD).
+Platform Eksekusi: Daemon pemrosesan biner Golang di OS Armbian pada cluster SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), terintegrasi dengan Joget DX v9 Enterprise di server pusat sebagai Master Audit Ledger.
+1. Anatomi Perangkat Keras: Ketahanan Off-Grid
+Modul S905X dirakit menjadi terminal Point of Sale (POS) hibrida berukuran ringkas dengan kompartemen pemindai tertutup (darkbox). Untuk beroperasi di daerah minim listrik, terminal ini ditenagai oleh sistem daya mandiri. Baterai internal diisi melalui panel surya mini, dan dilengkapi tuas putar mekanis yang menggerakkan generator induksi dari modifikasi motor pencetak (printer motor). Kasir cukup memutar tuas ini selama beberapa detik untuk menyuplai daya komputasi saat memindai uang kertas di tengah pemadaman listrik.
+2. Alur Eksekusi Pemrosesan Citra & AI (Edge Pipeline)
+Saat lembaran Rupiah (lama atau baru) dimasukkan ke dalam kompartemen:
+Standarisasi Resolusi Alat Bukti: Kamera makro mengambil citra pendaran UV dan mikroteks uang kertas. Daemon Golang di dalam Armbian langsung melakukan upscaling kanvas gambar ke resolusi 3000px x 3000px.
+Pemotongan Rasio: Algoritma kemudian secara presisi memotong (crop) kanvas tersebut menjadi rasio aspek 9:16. Standardisasi vertikal ini mutlak agar detail benang pengaman dan watermark tidak pecah atau mengalami layout shifting saat diinspeksi oleh auditor Bank Indonesia melalui layar smartphone.
+Inferensi Klasifikasi Lokal: Model AI ringan yang bobot awalnya (weights) dilatih dan dikomputasi melalui jaringan miners Qubic, dieksekusi secara luring di S905X. Sistem menghitung Indeks Autentisitas Redenominasi ($I_{auth}$):
+$$I_{auth} = \left( \frac{\sum M_{uv}}{\text{Area}_{roi}} \right) \times \tanh\left( \beta \cdot S_{microtext} \right)$$
+(Di mana $M_{uv}$ adalah matriks pendaran UV pada kanvas, $\text{Area}_{roi}$ adalah area fokus benang pengaman, dan $S_{microtext}$ adalah tingkat ketajaman mikroteks spesifik emisi tahun pencetakan).
+3. Sinkronisasi Asinkron & Arsitektur Joget DX v9
+Terminal POS ini menyimpan log transaksi di eMMC lokal. Ketika terkoneksi ke jaringan (misalnya saat kasir membawa perangkat ke area bersinyal, atau disinkronkan via Bluetooth ke smartphone manajer cabang), payload JSON dan foto bukti 9:16 dikirimkan ke server Joget DX v9.
+Isolasi Database Ledger: Mengingat sensitivitas data moneter, plugin integrasi Anda tidak boleh langsung mencatatnya sebagai saldo sah di Core Banking System. Kueri SQL wajib dikonfigurasi untuk menyisipkan baris data ke dalam tabel penampungan dengan menambahkan kolom temporary bernama waiting_for_approval.
+Manajemen DOM UI (Global Scope Guard): Pada dasbor auditor di Joget DX, terdapat countdown timer untuk SLA validasi uang tunai yang diragukan. Logika hitung mundur ini wajib dibangun menggunakan deklarasi variabel pada lingkup global, yakni var iv;. Pendekatan ini memastikan bahwa jika auditor melihat anomali pada uang baru dan menekan tombol "Hold for Forensics", fungsi eksternal dapat dengan instan memanggil clearInterval(iv) untuk membekukan timer tanpa memicu penolakan otomatis dari sistem.
+4. Distribusi Kerja "Vibe Coding" (Tim 5 Senior Engineer)
+Peran Engineer
+Ruang Lingkup Eksekusi
+Engineer 1
+Merakit biner embedded Go di Armbian, mengoptimalkan manipulasi kanvas citra ke dimensi 3000px dan rasio 9:16 agar hemat RAM S905X.
+Engineer 2
+Mengonversi model klasifikasi AI (dari engine Qubic) ke dalam format C++ NCNN agar inferensi $I_{auth}$ berjalan luring tanpa hambatan.
+Engineer 3
+Mengembangkan modul gomobile sebagai aplikasi companion di Android untuk menjembatani transfer data P2P dari mesin kasir ke cloud.
+Engineer 4
+Mendesain arsitektur database transit di Joget DX v9, memastikan kueri injeksi tepat sasaran ke kolom waiting_for_approval.
+Engineer 5
+Merancang Form UI Joget DX dan mengamankan eksekusi JavaScript frontend, memastikan injeksi var iv; aman dari memory leak.
+
+Mengingat urgensi peluncuran modul perbankan ini, bagian mana yang ingin tim Anda prototipekan terlebih dahulu: menulis skrip Go untuk manipulasi resolusi kamera, atau langsung mendesain skema tabel waiting_for_approval di dalam Joget DX?
+
