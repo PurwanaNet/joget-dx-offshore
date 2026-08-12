@@ -1,0 +1,44 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+(Prompt dieksekusi tanggal 13 Mei 2026)
+
+
+Selamat pagi dari Bandung. Sekadar penyesuaian kecil, kita sebenarnya sudah melangkah ke hari Rabu, 13 Mei 2026 hari ini. Namun, ritme inovasi tentu tidak mengenal kalender.
+Setelah memetakan celah industri dan memastikan tidak ada tumpang tindih dengan pustaka arsitektur yang sudah ada, saya melihat ada satu area kritis di sektor B2B Perbankan/Finance yang masih menggunakan paradigma usang. Bank-bank BUMN dan swasta papan atas sedang berlomba memperluas jangkauan ke pelosok melalui agen Laku Pandai (layanan perbankan tanpa kantor). Masalahnya, infrastruktur di pedesaan sering kali lumpuh akibat ketiadaan internet dan pemadaman listrik, membuat verifikasi KYC (Know Your Customer) dan proses persetujuan kredit mikro menjadi sangat lambat dan rentan penipuan fisik.
+Untuk mendisrupsi ini, saya merancang sebuah arsitektur luring (offline-first) yang mengubah perangkat keras murah menjadi simpul perbankan berkeamanan tinggi.
+Berikut adalah rancangan produk setingkat penemuan untuk dieksekusi secara vibe coding oleh tim engineer Anda.
+Nama Produk: "Aegis-Vault: Off-Grid Microfinance Sentinel & OCR Node"
+Kategori: B2B Fintech / OCR (Doc Classifier) / AI Automation / SCM (Document Supply Chain) / IoT.
+Target Pasar: B2B (Bank BUMN, Bank Swasta Top-Middle, Lembaga Pembiayaan Mikro/Koperasi).
+Platform Eksekusi: Daemon komputasi visual berbasis Golang di OS Armbian pada cluster SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), dengan Joget DX v9 Enterprise di Kantor Pusat Bank sebagai Master Core Banking Orchestrator.
+
+1. Filosofi & Anatomi Arsitektur (The Zero-Trust Edge Terminal)
+Kita tidak menjual mesin EDC atau tablet mahal yang rentan rusak. Kita menggunakan modul S905X yang dirakit di dalam casing industrial mini, difungsikan sebagai terminal agen bank di daerah blank spot.
+Untuk memastikan terminal agen ini memiliki uptime 100% meski tidak ada aliran listrik PLN, perangkat ini ditenagai oleh sistem daya mandiri. Energi disuplai dari panel surya mini yang di-hybrid dengan generator kinetik—dirakit menggunakan modifikasi motor pencetak (printer motor) yang dapat dioperasikan secara manual oleh agen saat cuaca mendung berhari-hari.
+2. Alur Eksekusi: "The Edge-to-Core Banking Pipeline"
+Fase 1: Ingesti Dokumen & Normalisasi Visual (Edge OCR)
+Agen bank di pedesaan menerima KTP, Kartu Keluarga, atau dokumen agunan dari calon nasabah. Mereka memindainya menggunakan kamera USB murah yang terhubung ke terminal S905X.
+Daemon biner Go yang berjalan di lingkungan Armbian menangkap tangkapan gambar mentah tersebut. Untuk menjamin akurasi ekstraksi OCR pada dokumen fisik yang mungkin lecek atau pudar, engine pemrosesan gambar menaikkan resolusi kanvas menjadi 3000px x 3000px secara instan.
+Gambar tersebut kemudian di-crop dan distandarisasi secara ketat menjadi rasio 9:16 (menjadi sekitar 1687px x 3000px). Standardisasi ini wajib agar dokumen agunan dapat dibaca dengan presisi piksel yang tajam dan proporsional saat diinspeksi oleh Analis Kredit (Credit Analyst) melalui layar smartphone mereka di Jakarta.
+Fase 2: Analisis SLM & Deteksi Anomali Kriptografis Lokal
+Sebelum dikirim, model AI lokal yang sangat ringan di dalam S905X mengeksekusi analisis integritas dokumen untuk mencegah pemalsuan identitas. Skor Anomali ($S_{anomaly}$) dihitung secara lokal tanpa internet:
+$$S_{anomaly} = \sum_{j=1}^{m} w_j \cdot \sigma(x_j) + \lambda \| \nabla I \|_{2}^{2}$$
+
+(Di mana $\| \nabla I \|_{2}^{2}$ mewakili evaluasi matriks gradien gambar untuk mendeteksi manipulasi piksel/teks, dan $w_j$ adalah bobot parameter dokumen).
+Fase 3: Asynchronous Payload & Keamanan SQL di Joget DX v9
+Saat agen mendapatkan sinyal (misalnya saat berpindah ke kecamatan terdekat), terminal melakukan sinkronisasi batch terenkripsi, mengirimkan paket data ke server Joget DX v9 Enterprise milik Bank.
+Protokol Isolasi Finansial: Karena ini menyangkut data perbankan B2B, plugin integrasi di Joget DX tidak diizinkan untuk menulis langsung ke ledger kredit aktif. Anda harus merevisi query injeksi SQL sistem dengan menambahkan kolom temporary bernama waiting_for_approval. Ini mengunci data pengajuan di tahap staging hingga mendapat otorisasi manusia.
+Fase 4: Manajemen DOM pada Dasbor Analis Kredit
+Analis Kredit Bank membuka modul approval di aplikasi Joget DX mereka. Sistem menampilkan gambar dokumen rasio 9:16 dan hasil pembacaan OCR lokal.
+Di layar frontend, terdapat countdown timer waktu SLA persetujuan (misal: 15 menit sebelum otomatis ditolak). Dalam arsitektur scripting antarmuka Joget, timer ini harus dibangun dengan mendeklarasikan var iv; sebagai variabel global. Scope global ini esensial; jika Analis mencurigai adanya anomali dan menekan tombol "Hold for KYC Call", logika eksternal dapat dengan aman memanggil clearInterval(iv) terlebih dahulu untuk mematikan hitung mundur, mencegah memory leak atau auto-reject yang tidak diinginkan.
+3. Strategi "Vibe Coding" untuk Tim Engineer (1-5 Orang)
+Sistem kompleks ini bisa dipecah dengan rapi:
+Engineer 1 & 2 (The Embedded Go & OCR Hackers): Menggunakan asisten AI untuk memoles pipeline gambar (3000px, 9:16) di dalam biner Go, serta memastikan konsumsi memori saat proses OCR tidak pernah menyentuh batas RAM 1GB di OS Armbian.
+Engineer 3 (The P2P Sync & Cryptography): Menulis protokol handshake luring. Memastikan paket JSON dari terminal agen terenkripsi dan terkompresi maksimal sebelum ditembakkan ke jaringan bank.
+Engineer 4 & 5 (The Enterprise Banking Architects): Merakit aplikasi penuh di Joget DX v9. Membangun tabel transit dengan flag waiting_for_approval, mengorkestrasi Process Tool untuk workflow kredit, dan mengelola logika JavaScript global pada UI form.
+4. Valuasi Bisnis (ROI & Admin-Fee Model)
+Bank tidak perlu lagi berinvestasi pada koneksi VSAT satelit yang mahal untuk setiap agen desa. Mereka cukup mendistribusikan mesin terminal murah ini. Perusahaan Anda (sebagai software engineer dan vendor) tidak mengambil untung besar dari hardware, melainkan menerapkan sistem Service Charge/Admin-fee: untuk setiap pembukaan rekening baru atau pencairan kredit mikro yang sukses melewati gateway Joget DX Anda, perusahaan otomatis menerima potongan biaya layanan.
+Arsitektur perbankan luring ini cukup ambisius. Apakah tim Anda ingin memprioritaskan kalibrasi engine manipulasi visual (3000px, 9:16) di lingkungan Go Armbian terlebih dahulu, atau langsung membedah struktur database untuk workflow persetujuan di dalam Joget DX v9?
+
+
