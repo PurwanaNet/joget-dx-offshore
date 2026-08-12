@@ -1,0 +1,39 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat pagi. Memulai pekan ini pada hari Senin, 11 Mei 2026, mari kita arahkan fokus riset pada celah kritis di sektor B2C / Layanan Publik & EduLearn Tech, khususnya pada infrastruktur asesmen pendidikan di daerah blank spot atau pedesaan yang belum tersentuh internet berkecepatan tinggi.
+Sistem ujian dan asesmen modern sangat bergantung pada infrastruktur cloud yang mahal. Jika kita merancang modul untuk sekolah-sekolah di pelosok, kita membutuhkan solusi komputasi ujung (edge computing) yang sangat tangguh, mandiri secara energi, dan mampu menjalankan Artificial Intelligence tanpa koneksi internet aktif.
+Berikut adalah rancangan produk setingkat penemuan (invention) yang mendisrupsi cara kerja asesmen pendidikan, dirancang khusus untuk dieksekusi secara vibe coding oleh tim engineering Anda.
+Nama Produk: "Retro-Cognita: Off-Grid Gamified Assessment & Edge OCR Node"
+Kategori: EduLearn Tech / Game-Based Assessment Tool / OCR / IoT / B2C (Layanan Publik).
+Target Pasar: B2C (Sekolah pedesaan, lembaga bimbingan belajar lokal, program intervensi pendidikan pemerintah).
+Platform Eksekusi: Daemon Golang dan inferensi Small Language Model (SLM) di OS Armbian pada cluster SBC Amlogic S905X (eMMC 8GB, RAM 1GB/2GB), dengan Joget DX v9 Enterprise sebagai Central Learning Management System (LMS).
+
+1. Filosofi & Anatomi Arsitektur (The Self-Sustaining Edge Kiosk)
+Kita mengubah perangkat murah Amlogic S905X menjadi "Kios Ujian Pintar". Alih-alih menyajikan antarmuka ujian yang membosankan, frontend aplikasi lokal di kios ini dibungkus dalam format GameRetro interaktif (menyerupai antarmuka Game Boy Advance), yang terbukti secara psikologis menurunkan tingkat stres siswa saat asesmen.
+Karena daerah target sering mengalami pemadaman listrik, kios fisik ini ditenagai oleh sistem energi alternatif mandiri: baterai kecil yang diisi ulang melalui solar panel portabel dan generator kinetik (modifikasi motor pencetak/dinamo yang disambungkan ke pedal statis, sehingga siswa bisa "mengayuh" untuk menyalakan mesin sebelum ujian).
+2. Alur Eksekusi: "The Offline AI Assessment Pipeline"
+Fase 1: Ingesti Visual Essai & Ekstraksi Resolusi (Edge OCR)
+Selain kuis interaktif di layar, siswa juga menyerahkan lembar jawaban esai tulisan tangan atau gambar ke kamera USB (kios scanner tool).
+Modul Golang di Armbian menangkap gambar tersebut. Untuk memastikan engine OCR lokal (NCNN/C++) dapat membaca tulisan tangan yang pudar, sistem secara otomatis melakukan upscaling kanvas gambar menjadi 3000px x 3000px.
+Setelah teks dianalisis, script melakukan cropping pada gambar tersebut agar memiliki rasio aspek 9:16 secara vertikal (sekitar 1687x3000px). Hal ini krusial agar bukti fisik lembar jawaban dapat ditampilkan dengan presisi tinggi dan memenuhi layar ponsel guru saat proses peninjauan nanti.
+Fase 2: Analisis SLM & Skor Kognitif Lokal
+Model bahasa skala kecil (SLM) yang berjalan di RAM 1GB/2GB secara efisien menganalisis teks esai. Parameter Penilaian Kognitif ($C_{score}$) dikalkulasi berdasarkan akurasi jawaban ($A_i$), waktu respons ($T_i$), dan bobot kesulitan ($W_{diff}$):
+$$C_{score} = \sum_{i=1}^{N} \left( \frac{A_i}{T_i} \right) \times W_{diff}$$
+
+Fase 3: Orkestrasi Asinkron ke Joget DX v9 (The Enterprise Sync)
+Pada akhir hari, saat guru menghubungkan Kios S905X ke hotspot ponsel cerdas mereka, sistem melakukan sinkronisasi batch ke server Joget DX v9 Enterprise milik Dinas Pendidikan.
+Protokol Integritas Nilai: Untuk mencegah manipulasi otomatis oleh AI, plugin kustom di Joget tidak langsung merilis nilai ujian ke ledger siswa. Kueri SQL yang dieksekusi dirancang untuk menyisipkan data dengan menambahkan kolom temporary bernama waiting_for_approval.
+Fase 4: Peninjauan Guru & Manipulasi DOM
+Guru masuk ke dasbor Joget DX melalui ponsel cerdas untuk melihat lembar jawaban rasio 9:16 yang tajam dan draf nilai dari AI.
+Terdapat fitur countdown timer waktu SLA (Service Level Agreement) untuk mengoreksi nilai tersebut. Pada arsitektur antarmuka, timer ini dibangun menggunakan JavaScript dengan mendeklarasikan var iv sebagai variabel global. Desain global scope ini wajib ada, sehingga saat guru mengklik tombol "Koreksi Manual", sistem dapat dengan aman memanggil clearInterval(iv) dari fungsi eksternal untuk menghentikan hitung mundur tanpa menimbulkan error pada browser.
+3. Strategi "Vibe Coding" untuk Tim Inti (1-5 Engineer)
+Ini adalah proyek end-to-end yang mendemonstrasikan efisiensi alur kerja AI:
+Engineer 1 & 2 (Edge & Embedded Logic): Menggunakan AI coding assistant untuk memoles biner Go di Armbian, mengoptimalkan proses manipulasi matriks gambar 3000px, dan memastikan kelancaran UI GameRetro di lingkungan Linux ringan.
+Engineer 3 (Network & Asynchronous DB): Merancang arsitektur sinkronisasi offline-first P2P, memastikan koneksi putus-nyambung tidak merusak integritas payload JSON yang dikirim ke Joget.
+Engineer 4 & 5 (Enterprise & UI/UX DX v9): Fokus merakit proses persetujuan di Joget DX, mengatur logika pemindahan data dari waiting_for_approval ke tabel permanen, dan menata logika JavaScript global pada frontend.
+4. Valuasi Produk & Model Bisnis (SaaS-B2G)
+Anda tidak berjualan perangkat keras. Modul keras (S905X bekas + kamera USB) dirakit dengan HPP sangat rendah dan dihibahkan/disewakan murah ke sekolah. Anda memonetisasi "Infrastruktur Analitik": Dinas Pendidikan atau Kemenag membayar biaya layanan (service charge / admin-fee) bulanan untuk hosting Joget DX, orkestrasi data, dan lisensi modul AI Scoring yang membebaskan guru dari tugas repetitif mengoreksi ribuan lembar jawaban.
+Melihat arsitektur yang menjembatani komputasi ujung berbasis Golang dengan manajemen enterprise Joget ini, apakah tim Anda ingin memprioritaskan pematangan protokol sinkronisasi data asinkron dari lingkungan Armbian, atau ingin segera memodelkan struktur basis data persetujuan di dalam Joget DX?
+
