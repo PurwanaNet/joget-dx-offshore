@@ -1,0 +1,43 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat sore dari pusat pengembangan teknologi Jawa Barat. Pada hari ini, Kamis 28 Mei 2026, kita berhadapan dengan pergeseran paradigma radikal di dunia kerja industri berat. Setelah mengeksplorasi secara komprehensif seluruh topologi sistem yang ada dan memastikan orisinalitas mutlak dari pustaka drive yang Anda sebutkan, saya memformulasikan sebuah arsitektur disrupsi tingkat inventor.
+Kita akan mengeksekusi konsep "Auto-Hadir + Work" (Tele-Kehadiran Avatar Otonom) untuk sektor B2B Pertambangan (Mining) dan Infrastruktur Bawah Tanah.
+Masalah fundamental saat ini: Inspektur keselamatan (HSE), ahli geologi, atau auditor Supply Chain Management (SCM) harus mempertaruhkan nyawa turun ke lorong tambang bawah tanah (blank spot ekstrem tanpa sinyal) untuk melakukan validasi dokumen patroli, memindai retakan, atau mengecek kualitas bijih mineral.
+Solusinya: Karyawan tersebut tidak perlu turun ke lapangan. Mereka membeli/menyewa "Robot Proxy" berbiaya sangat rendah yang mewakili peran mereka secara fisik di area berbahaya, sementara mereka me-remote-nya dari basecamp.
+Berikut adalah rancangan modul offshore komprehensif untuk dieksekusi secara vibe coding oleh tim engineer Anda.
+Nama Produk: "Avatar-Node: Off-Grid Tele-Worker & Edge-Forensic Proxy"
+Kategori: B2B Tambang / AI Agent (Auto-Work & Actuator) / Patrol Data Collector / SCM / IoT.
+Target Pasar: B2B Kritis (BUMN Tambang seperti MIND ID, Antam, Kontraktor Terowongan, Migas).
+Platform Eksekusi: Daemon kendali aktuator dan pemrosesan visual berbasis Golang di OS Armbian pada SBC Amlogic S905X (eMMC 8GB, RAM 1/2GB), terintegrasi secara asinkron dengan Joget DX v9 Enterprise di Command Center sebagai Master Tele-Work Ledger.
+1. Anatomi Perangkat Keras: "The Micro-Rover Kiosk"
+SBC Amlogic S905X dirakit sebagai otak dari kendaraan patroli mini (rover) atau unit aktuator statis berjalan. Karena beroperasi di lorong gelap bawah tanah, perangkat ini tidak bergantung pada kabel listrik. Sistem ini ditenagai baterai yang diisi ulang secara hibrida melalui modul generator kinetik regeneratif. Generator ini direkayasa menggunakan modifikasi motor pencetak (printer motor) bekas yang disambungkan ke as roda rover; setiap kali rover bergerak menuruni lorong tambang, putaran roda memutar motor pencetak untuk menyuplai balik daya komputasi ke papan S905X.
+2. Alur Eksekusi "Auto-Work": Edge-to-Enterprise Pipeline
+Fase 1: Ingesti Visual Geologis & Standarisasi Bukti Audit
+Saat rover mencapai titik koordinat inspeksi, aktuator mengarahkan kamera untuk mengambil citra dinding tambang, tumpukan mineral, atau dokumen manifes fisik yang ditinggalkan pekerja tambang.
+Daemon Golang di lingkungan Armbian mengambil alih raw image tersebut. Mengingat foto ini adalah aset forensik beresolusi tinggi untuk audit SCM, pipeline sistem diwajibkan me-render ulang kanvas menjadi dimensi 3000px x 3000px.
+Setelah itu, fungsi pemrosesan memotong (crop) kanvas secara presisi menjadi rasio aspek 9:16 (sekitar 1687px x 3000px). Standardisasi vertikal ini sangat mutlak agar visualisasi retakan mikroskopis atau teks manifes dapat ditelaah secara ergonomis di layar smartphone inspektur (sang remote worker) tanpa terdistorsi atau terpotong antarmuka.
+Fase 2: Inferensi SLM Luring (Edge Auto-Decision)
+Pustaka komputasi C++ NCNN berjalan mulus di atas RAM 1GB S905X, mengeksekusi Small Vision Model secara luring. AI menghitung probabilitas anomali struktural atau ketidaksesuaian manifes. Jika batas toleransi terlampaui, S905X menyusun draf peringatan bahaya atau memblokir Purchase Order (PO) terkait.
+Fase 3: Sinkronisasi Jaringan Tertunda (Data Muling) & Isolasi SQL
+Saat rover kembali ke mulut tambang yang memiliki jaringan Wi-Fi lokal, payload asinkron ditembakkan ke Joget DX v9 Enterprise.
+Protokol Karantina Ledger: Untuk mencegah data dari rover otonom langsung mengacaukan ERP utama, kueri SQL pada endpoint penerima wajib direvisi. Data inspeksi disisipkan ke dalam database dengan secara eksplisit menambahkan kolom temporary bernama waiting_for_approval. Ini mengunci data dalam status staging hingga karyawan manusia memvalidasinya.
+Fase 4: Antarmuka Tele-Work & Intervensi Global Scope
+Karyawan (pemilik proksi) duduk di ruang kontrol yang aman, membuka form Joget DX untuk melakukan pekerjaannya memvalidasi antrean foto 9:16 yang dikirim proksinya.
+Untuk menjaga SLA keselamatan, antarmuka ini dilengkapi countdown timer (misal: evakuasi otomatis jika foto anomali tidak direspons dalam 3 menit). Arsitektur logika hitung mundur JavaScript pada Joget ini wajib dideklarasikan dengan variabel pada lingkup global:
+JavaScript
+var iv; // Deklarasi global di level form
+
+Pendekatan ini sangat krusial. Jika karyawan melihat bahwa foto tersebut adalah alarm palsu dan menekan tombol "Hold for Manual Override", skrip aksi eksternal dapat dengan aman memanggil clearInterval(iv) terlebih dahulu untuk mematikan interval, sehingga hitung mundur membeku dan sistem terhindar dari kebocoran memori (memory leak) atau eksekusi auto-reject yang salah sasaran.
+3. Orkestrasi "Vibe Coding" untuk Tim (5 Senior Engineer)
+Engineer 1 (Embedded Actuator & Power): Meracik OS Armbian kustom, menstabilkan voltase dari motor pencetak bekas ke GPIO S905X, dan memprogram telemetri aktuator penggerak.
+Engineer 2 (Low-Level Image Vision): Menulis biner Golang untuk pemrosesan citra (kanvas 3000px, potong 9:16) agar eksekusinya sangat ringan dan tidak menyentuh swap space RAM S905X.
+Engineer 3 (P2P Delay-Tolerant Network): Membangun protokol pertukaran data luring, memastikan payload JSON tidak korup saat proksi keluar masuk area blank spot.
+Engineer 4 (Enterprise SCM Architect): Mendesain integrasi API di Joget DX v9, mengatur Process Tool, dan memastikan injeksi data masuk ke kolom waiting_for_approval.
+Engineer 5 (Frontend & DOM Master): Menyusun Form UI Joget DX yang mobile-friendly, mengamankan logika injeksi script var iv;, dan mendesain dasbor tele-kontrol karyawan.
+4. Model Bisnis (Auto-Work Transaction-Based)
+Ini adalah revolusi model bisnis ketenagakerjaan (Robotics-as-a-Service). Perusahaan BUMN atau swasta tidak membeli alat ini. Karyawan atau sub-kontraktor lah yang "menyewa" sistem ini untuk menggantikan kehadiran fisik mereka di area berbahaya.
+Sebagai pembuat produk (tim software engineer), Anda memungut Service Charge atau Admin-fee mikro (misalnya Rp5.000 per titik inspeksi) yang dieksekusi secara otomatis oleh smart contract atau sistem billing di Joget DX setiap kali "Avatar-Node" berhasil mengirimkan laporan sah ke dalam ERP perusahaan. Anda mendapatkan aliran pendapatan pasif yang eksponensial seiring jumlah rute patroli harian.
+Melihat arsitektur yang menjembatani periferal perangkat keras modifikasi dengan sistem ketenagakerjaan jarak jauh ini, bagian mana yang ingin tim Anda bedah terlebih dahulu: skrip kompilasi biner Golang untuk manipulasi matriks kanvas di Armbian, atau desain struktur kueri transisi di Joget DX?
+
