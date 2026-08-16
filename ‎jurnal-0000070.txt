@@ -1,0 +1,748 @@
+research kan secara mendalam dan konfrehensif dengan profil sebagai seorang pakar ataupun professor cyber security tentang proses enkripsi / dekripsi pada suatu tabel database, dan bagaimana lazim nya perusahaan perusahaan middle/entreprise melakukan hal tersebut.
+
+judul : mekanisme, alur kerja, prosedur penyimpanan data rahasia perusahaan 
+
+Background:
+Saat ini, value yang sama akan menghasilkan encrypted value yang sama saat disimpan di database. Kondisi ini dapat meningkatkan risiko keamanan karena pola data dapat dikenali apabila salah satu encrypted value berhasil diketahui.
+
+Acceptance Criteria:
+Sesuaikan mekanisme encryption agar value cypher text dinamis/berbeda walaupun value plain teks nya sama pada setiap proses encryption disebuah record (misal : data gaji karyawan).
+
+Value yang sama harus menghasilkan encrypted value yang berbeda setiap kali disimpan.
+
+Perubahan mekanisme tidak boleh memengaruhi proses decrypt; data tetap dapat dikembalikan ke value aslinya dengan benar.
+
+
+============================================================================
+Claude Sonnet 5 Free ~> Effort Medium ~> mode Thingking enabled, promted by : Angga Purwana
+=========================
+
+Mekanisme, Alur Kerja, dan Prosedur Penyimpanan Data Rahasia Perusahaan
+Studi Komprehensif: Dari Deterministic Encryption Menuju Randomized/Probabilistic Encryption pada Database Enterprise
+
+1. Ringkasan Eksekutif
+Dokumen ini disusun sebagai kajian teknis mendalam terkait perbaikan mekanisme enkripsi kolom data sensitif (misalnya data gaji karyawan, nomor identitas, data kesehatan, informasi kartu pembayaran) pada database perusahaan skala menengah hingga enterprise.
+Masalah inti yang melatarbelakangi kajian ini: skema enkripsi yang digunakan saat ini bersifat deterministik — nilai plaintext yang sama akan selalu menghasilkan ciphertext yang identik. Kondisi ini membuka celah pattern analysis attack dan frequency analysis attack: jika penyerang berhasil memetakan satu pasangan plaintext-ciphertext (misalnya lewat kebocoran, insider threat, atau brute-force pada satu baris), maka seluruh baris lain dengan ciphertext yang sama otomatis "terbongkar" nilainya tanpa perlu mendekripsi ulang.
+Solusi yang direkomendasikan: migrasi ke skema enkripsi probabilistik/randomized menggunakan algoritma AES-256-GCM (atau AES-CBC dengan random IV sebagai alternatif) dengan Initialization Vector (IV)/Nonce unik per operasi enkripsi, dipadukan dengan arsitektur envelope encryption dan Key Management System (KMS) — pola yang lazim dipakai oleh perusahaan-perusahaan enterprise (perbankan, fintech, healthcare, e-commerce skala besar).
+
+2. Akar Masalah: Mengapa Enkripsi Deterministik Berbahaya
+2.1 Anatomi Masalah
+Skema enkripsi deterministik umumnya terjadi karena salah satu dari kondisi berikut:
+Penyebab
+Penjelasan
+ECB mode
+Mode operasi block cipher paling sederhana; setiap blok plaintext dienkripsi secara independen dengan key yang sama, tanpa IV. Blok yang identik selalu menghasilkan blok cipher yang identik.
+CBC/GCM dengan IV statis atau IV yang diturunkan dari data
+Developer sering (secara keliru) menggunakan IV tetap (hardcoded) atau menurunkan IV dari primary key/nilai plaintext itu sendiri agar "reproducible" — ini menghilangkan sifat acak yang justru menjadi inti keamanan mode tersebut.
+Deterministic Encryption by design
+Sengaja dipilih karena kebutuhan equality search (WHERE gaji = ?) tanpa mendekripsi seluruh tabel — trade-off yang umum tapi harus dikompensasi dengan mekanisme lain.
+
+2.2 Vektor Serangan yang Muncul
+Chosen/Known Plaintext Correlation — Jika satu karyawan mengetahui gajinya sendiri dan ciphertext-nya, ia dapat mencocokkan pola ciphertext yang sama pada baris lain dan menyimpulkan siapa saja yang punya gaji identik.
+Frequency Analysis — Pada kolom dengan kardinalitas rendah (status kepegawaian, golongan gaji, kategori jabatan), distribusi ciphertext yang berulang mengungkap distribusi data asli walau nilai belum sepenuhnya "dibongkar".
+Data Leakage Melalui Query Logs / Backup / Replika — Ciphertext yang konsisten memudahkan korelasi lintas sistem (data warehouse, log audit, backup) tanpa perlu akses ke key.
+Insider Threat Amplification — Admin database dengan akses read-only ke ciphertext saja tetap bisa melakukan clustering data tanpa pernah membutuhkan key dekripsi.
+
+3. Konsep Dasar Kriptografi yang Relevan
+3.1 Symmetric Encryption untuk Data-at-Rest
+Encryption kolom database pada praktiknya hampir selalu memakai symmetric encryption (AES) karena kebutuhan performa (encrypt/decrypt jutaan baris) — bukan asymmetric (RSA/ECC), yang jauh lebih lambat dan hanya dipakai untuk melindungi key itu sendiri (lihat envelope encryption di Bab 5).
+3.2 Mode Operasi Block Cipher
+Mode
+Deterministik?
+Autentikasi Integritas?
+Rekomendasi
+ECB
+Ya (selalu)
+Tidak
+❌ Jangan pernah dipakai
+CBC (dengan IV acak)
+Tidak, jika IV acak per operasi
+Tidak native (perlu HMAC terpisah)
+⚠️ Bisa dipakai, tapi butuh MAC tambahan
+CTR (dengan nonce acak)
+Tidak
+Tidak native
+⚠️ Sama seperti CBC
+GCM (Galois/Counter Mode)
+Tidak, jika IV acak per operasi
+Ya (built-in authentication tag)
+✅ Standar industri saat ini
+
+AES-256-GCM menjadi pilihan dominan karena satu operasi menghasilkan sekaligus: kerahasiaan (confidentiality) dan integritas/autentikasi (authenticity) melalui authentication tag — mencegah ciphertext dimodifikasi tanpa terdeteksi (melindungi dari bit-flipping attack yang mungkin terjadi pada CBC/CTR murni).
+3.3 IV / Nonce: Kunci dari Randomisasi
+IV (Initialization Vector) pada CBC dan Nonce pada GCM adalah nilai yang wajib unik untuk setiap operasi enkripsi dengan key yang sama.
+IV tidak perlu dirahasiakan — ia boleh disimpan bersama ciphertext dalam bentuk plaintext, karena keamanannya bergantung pada key, bukan pada kerahasiaan IV.
+Standar panjang IV untuk GCM: 96-bit (12 byte), dibangkitkan menggunakan Cryptographically Secure Pseudo-Random Number Generator (CSPRNG) — bukan Math.random() atau sejenisnya.
+Aturan emas: IV/nonce yang sama TIDAK BOLEH dipakai ulang dengan key yang sama pada GCM — pelanggaran ini bisa membocorkan key/plaintext (nonce-reuse catastrophe).
+Inilah mekanisme inti yang menjawab acceptance criteria: dengan menghasilkan IV baru secara acak setiap kali proses enkripsi dijalankan — walau plaintext dan key sama persis — ciphertext yang dihasilkan akan selalu berbeda.
+
+4. Alur Kerja (Workflow) Encrypt & Decrypt yang Diusulkan
+4.1 Skema Penyimpanan Kolom
+Alih-alih menyimpan satu kolom ciphertext, praktik enterprise menyimpan paket terstruktur yang berisi seluruh komponen yang dibutuhkan untuk dekripsi:
+[key_version] || [nonce/IV] || [ciphertext] || [auth_tag]
+Contoh skema tabel:
+sql
+CREATE TABLE employee_salary (
+    id                BIGINT PRIMARY KEY,
+    employee_id       BIGINT NOT NULL,
+    salary_ciphertext BYTEA NOT NULL,   -- hasil enkripsi (ciphertext + tag digabung, tergantung library)
+    salary_nonce      BYTEA NOT NULL,   -- IV/nonce unik 12 byte, acak per baris/per update
+    key_version       SMALLINT NOT NULL, -- referensi ke DEK versi berapa yang dipakai
+    created_at        TIMESTAMP,
+    updated_at        TIMESTAMP
+);
+Beberapa tim menggabungkan nonce || ciphertext || tag menjadi satu kolom BLOB tunggal (format umum pustaka seperti Libsodium, Google Tink) agar lebih ringkas secara operasional.
+4.2 Alur Encrypt (Write Path)
+Aplikasi menerima plaintext (misal nilai gaji: 15000000).
+Aplikasi meminta Data Encryption Key (DEK) aktif dari KMS/vault (lihat Bab 5).
+Sistem membangkitkan nonce/IV baru secara acak (CSPRNG) — unik untuk operasi ini.
+Plaintext dienkripsi menggunakan AES-256-GCM dengan key = DEK, iv = nonce baru.
+Hasil ciphertext + auth_tag disimpan bersama nonce dan key_version pada baris yang bersangkutan.
+Plaintext, DEK, dan nonce tidak pernah ditulis ke log aplikasi.
+Karena langkah (3) menghasilkan nonce baru setiap kali — baik untuk INSERT baris baru maupun UPDATE nilai yang sama persis — maka ciphertext yang tersimpan akan selalu berbeda, walaupun plaintext-nya identik. Inilah yang memenuhi acceptance criteria pertama dan kedua.
+4.3 Alur Decrypt (Read Path)
+Aplikasi membaca baris: ciphertext, nonce, dan key_version.
+Aplikasi meminta DEK yang sesuai key_version tersebut dari KMS (bukan otomatis DEK "terbaru" — penting untuk mendukung key rotation tanpa perlu re-enkripsi seluruh tabel sekaligus).
+Sistem melakukan dekripsi AES-256-GCM menggunakan key = DEK, iv = nonce yang tersimpan, dan memverifikasi auth_tag.
+Jika auth_tag valid → plaintext dikembalikan. Jika tidak valid → proses ditolak (indikasi ciphertext telah dimodifikasi/corrupt).
+Karena nonce disimpan eksplisit per baris (bukan dihitung ulang), proses dekripsi tetap deterministik dan selalu berhasil mengembalikan plaintext asli — memenuhi acceptance criteria ketiga: randomisasi ciphertext tidak memengaruhi kebenaran proses dekripsi.
+4.4 Diagram Alur Sederhana
+ENCRYPT:
+  plaintext ──┐
+              ├──► [AES-256-GCM(key=DEK, iv=random_nonce)] ──► ciphertext + tag
+  DEK ────────┘                     ▲
+  random_nonce ──────────────────────┘
+       │
+       └────► disimpan bersama ciphertext (kolom nonce)
+
+DECRYPT:
+  ciphertext + tag ──┐
+                      ├──► [AES-256-GCM Decrypt(key=DEK, iv=stored_nonce)] ──► plaintext
+  stored_nonce ───────┤
+  DEK (by key_version)┘
+
+5. Envelope Encryption & Key Management: Praktik Standar Enterprise
+Perusahaan menengah ke atas nyaris tidak pernah menyimpan raw encryption key langsung di kode aplikasi atau environment variable secara statis. Pola yang lazim digunakan adalah envelope encryption:
+5.1 Hierarki Key
+KEK (Key Encryption Key)  ──disimpan di──►  HSM / KMS (AWS KMS, GCP Cloud KMS,
+     │                                       Azure Key Vault, HashiCorp Vault)
+     │  (mengenkripsi)
+     ▼
+DEK (Data Encryption Key) ──dipakai untuk──►  Enkripsi kolom data (per tabel/
+                                               per tenant/per periode waktu)
+KEK disimpan dan dikelola sepenuhnya di dalam HSM (Hardware Security Module) atau layanan KMS terkelola — tidak pernah keluar dari batas kriptografi tersebut dalam bentuk plaintext.
+DEK adalah key yang benar-benar dipakai mengenkripsi data. DEK ini sendiri dienkripsi ("dibungkus") oleh KEK dan disimpan (dalam bentuk terenkripsi) di database atau secret store aplikasi. Saat dibutuhkan, aplikasi memanggil KMS untuk "unwrap" DEK menggunakan KEK, memakainya di memori, lalu membuangnya setelah operasi selesai.
+Pola ini memastikan tidak ada satu titik pun di mana raw key tersimpan permanen di luar HSM/KMS, dan memudahkan key rotation tanpa harus mendekripsi ulang seluruh database sekaligus.
+5.2 Mengapa Bukan Hardcode Key di Aplikasi?
+Risiko Hardcode Key
+Mitigasi via KMS
+Key ikut ter-commit ke source control
+Key tidak pernah ada di kode, hanya reference/ID
+Sulit rotasi (harus redeploy semua service)
+Rotasi terjadi terpusat, transparan bagi aplikasi
+Tidak ada audit siapa yang memakai key kapan
+KMS mencatat setiap Decrypt/GenerateDataKey call (CloudTrail, dsb.)
+Satu key bocor = seluruh data bocor
+Blast radius terbatas per DEK/per tenant/per periode
+
+5.3 Key Rotation
+Praktik umum:
+Rotasi KEK dilakukan berkala (misal tahunan) atau saat insiden — dampaknya hanya perlu "re-wrap" DEK, bukan re-enkripsi seluruh data.
+Rotasi DEK lebih sering (misal per kuartal/tahun) — data lama tetap bisa didekripsi karena key_version disimpan per baris, sementara data baru memakai DEK versi terbaru. Migrasi bertahap (lazy re-encryption) dilakukan saat baris diakses/diubah, menghindari downtime besar.
+
+6. Trade-off: Kebutuhan Query vs. Keamanan (Isu Kritis yang Perlu Diputuskan)
+Ini adalah pertimbangan paling penting yang perlu didiskusikan dengan tim produk/data sebelum implementasi, karena randomized encryption punya konsekuensi langsung terhadap kemampuan query database.
+6.1 Konsekuensi Randomized Encryption
+Setelah migrasi ke AES-GCM dengan nonce acak:
+❌ SELECT * FROM employee_salary WHERE salary_ciphertext = ? tidak akan pernah match, karena ciphertext yang sama tidak pernah berulang.
+❌ ORDER BY, GROUP BY, index B-tree pada kolom terenkripsi menjadi tidak berguna secara langsung.
+✅ Query harus dilakukan di application layer (dekripsi di memori aplikasi, lalu filter), atau memakai pola tambahan di bawah ini.
+6.2 Pola yang Lazim Dipakai Jika Butuh Searchability
+Kebutuhan
+Solusi Umum di Enterprise
+Exact-match search tanpa mengorbankan randomisasi ciphertext utama
+Blind Index: simpan kolom tambahan berisi HMAC-SHA256(plaintext, search_key) — deterministik tapi terpisah dari kolom ciphertext utama, dan hanya dipakai untuk pencarian, bukan untuk membaca nilai.
+Range query (misal gaji > X)
+Order-Preserving/Order-Revealing Encryption (OPE/ORE) — jarang dipakai murni karena bocor informasi urutan; lebih umum: dekripsi terbatas di aplikasi/service khusus dengan akses terbatas, atau simpan rentang/bucket gaji dalam bentuk tidak sensitif (misal grade/band) secara terpisah dari nilai eksak.
+Analitik agregat (rata-rata gaji per divisi)
+Dilakukan di secure enclave / service backend khusus dengan akses dekripsi terbatas dan diaudit, bukan langsung di query SQL biasa.
+Aplikasi butuh format tertentu tetap terjaga (misal nomor kartu 16 digit)
+Format-Preserving Encryption (FPE, FF1/FF3-1) atau Tokenization — dipakai luas di industri pembayaran (PCI DSS) untuk mengganti data asli dengan token yang formatnya identik tapi tidak reversibel tanpa vault tokenisasi.
+
+6.3 Rekomendasi Praktis untuk Kasus "Data Gaji Karyawan"
+Karena gaji jarang di-query langsung dengan WHERE gaji = angka_spesifik (lebih umum: filter by range/grade, atau tampil per-karyawan by ID), rekomendasi:
+Kolom ciphertext utama → AES-256-GCM randomized (sesuai acceptance criteria).
+Kolom salary_grade/band disimpan terpisah dalam bentuk tidak sensitif (misal "Grade 5") jika dibutuhkan untuk filter/laporan agregat — tanpa membocorkan nilai eksak.
+Query "gaji karyawan X" dilakukan by primary key/employee_id, bukan by value gaji — sehingga randomized encryption tidak berdampak.
+
+7. Perbandingan Pendekatan Enkripsi di Level Enterprise
+Pendekatan
+Contoh
+Kelebihan
+Kekurangan
+Umum Dipakai Untuk
+TDE (Transparent Data Encryption)
+SQL Server TDE, Oracle TDE, MySQL InnoDB Encryption
+Transparan bagi aplikasi, melindungi file fisik/backup
+Tidak melindungi dari akses via query legal (DBA/aplikasi tetap lihat plaintext saat query), umumnya masih deterministik di level baris jika tidak dikombinasi
+Melindungi data-at-rest dari pencurian disk/backup
+Column-level / Application-level Encryption
+AES-GCM per kolom seperti dibahas di atas
+Kontrol granular, bisa randomized, melindungi bahkan dari DBA
+Kompleksitas lebih tinggi, query terbatas
+Data sangat sensitif: gaji, PII, data kesehatan, data kartu
+Client-Side / End-to-End Encryption
+Enkripsi dilakukan di sisi client sebelum data sampai ke server
+Server/DB provider tidak pernah lihat plaintext sama sekali
+Fitur search/index nyaris hilang total, kompleksitas tinggi
+Aplikasi zero-knowledge, data kerahasiaan sangat tinggi
+Tokenization
+Vault tokenisasi memetakan nilai asli ↔ token acak
+Data asli tidak pernah keluar dari vault; token aman dipakai di sistem lain
+Butuh infrastruktur vault terpisah
+Data kartu pembayaran (PCI DSS), SSN/NIK
+Deterministic Encryption (murni)
+AES-SIV, atau AES-ECB/CBC dengan IV statis
+Mendukung equality search langsung di DB
+Rentan pattern analysis (masalah yang dibahas dokumen ini)
+Hanya untuk kasus terbatas + selalu dikombinasi mitigasi lain
+
+Mayoritas perusahaan enterprise (perbankan, fintech, healthcare) menggunakan kombinasi berlapis: TDE di level storage/backup + column-level randomized encryption untuk kolom super-sensitif + tokenization untuk data kartu pembayaran + blind index untuk kebutuhan search terbatas.
+
+8. Aspek Kepatuhan (Compliance) yang Relevan
+Regulasi/Standar
+Relevansi dengan Randomized Encryption
+PCI DSS (data kartu pembayaran)
+Mewajibkan strong cryptography dan key management terdokumentasi; deterministic encryption pada PAN dianggap risiko tinggi.
+UU PDP (Indonesia) / GDPR (EU)
+Menekankan prinsip data protection by design — enkripsi yang mudah dipetakan polanya bertentangan dengan prinsip ini untuk data pribadi sensitif (termasuk data kepegawaian/finansial).
+ISO/IEC 27001 – Annex A (kontrol kriptografi)
+Mewajibkan kebijakan penggunaan kontrol kriptografi, termasuk manajemen key formal (KMS, rotasi, pemisahan tugas).
+SOC 2 (Security/Confidentiality Trust Criteria)
+Auditor umumnya menandai deterministic encryption pada data sensitif sebagai temuan (finding) yang perlu remediasi.
+
+
+9. Contoh Implementasi Teknis (Ilustratif)
+9.1 Pseudocode Encrypt (Node.js, library crypto bawaan — AES-256-GCM)
+javascript
+const crypto = require('crypto');
+
+function encryptField(plaintext, dek /* Buffer 32 byte, dari KMS */) {
+  const iv = crypto.randomBytes(12); // nonce acak 96-bit, unik setiap panggilan
+  const cipher = crypto.createCipheriv('aes-256-gcm', dek, iv);
+
+  const ciphertext = Buffer.concat([
+    cipher.update(String(plaintext), 'utf8'),
+    cipher.final()
+  ]);
+  const authTag = cipher.getAuthTag();
+
+  return {
+    ciphertext: ciphertext.toString('base64'),
+    nonce: iv.toString('base64'),
+    authTag: authTag.toString('base64')
+  };
+}
+9.2 Pseudocode Decrypt
+javascript
+function decryptField({ ciphertext, nonce, authTag }, dek) {
+  const decipher = crypto.createDecipheriv(
+    'aes-256-gcm',
+    dek,
+    Buffer.from(nonce, 'base64')
+  );
+  decipher.setAuthTag(Buffer.from(authTag, 'base64'));
+
+  const plaintext = Buffer.concat([
+    decipher.update(Buffer.from(ciphertext, 'base64')),
+    decipher.final() // akan throw error jika authTag tidak valid → integritas terjaga
+  ]);
+
+  return plaintext.toString('utf8');
+}
+Catatan: dek di atas pada praktiknya tidak pernah disimpan statis di kode — ia diambil dari KMS (kms.decrypt(wrappedDek)) saat runtime, dan hanya berada di memori selama proses enkripsi/dekripsi berlangsung.
+9.3 Contoh Perilaku Setelah Perbaikan
+Operasi
+Plaintext
+Nonce (acak)
+Ciphertext (ilustratif)
+Insert baris 1
+15000000
+a1f9...
+8bE2...
+Insert baris 2 (nilai gaji sama)
+15000000
+7c3d...
+f01A...
+Update baris 1 (nilai tetap sama)
+15000000
+4e88...
+92Zq...
+
+Ketiganya menghasilkan ciphertext berbeda total walau plaintext identik — sekaligus tetap bisa didekripsi kembali menjadi 15000000 masing-masing menggunakan nonce yang tersimpan bersamanya.
+
+10. Checklist Implementasi untuk Tim Engineering
+Ganti mode enkripsi dari ECB/CBC-IV-statis menjadi AES-256-GCM dengan nonce acak CSPRNG per operasi.
+Tambahkan kolom nonce/iv dan key_version (dan auth_tag jika tidak digabung otomatis oleh library) pada setiap tabel yang menyimpan data terenkripsi.
+Migrasikan pengelolaan key ke KMS/HSM (envelope encryption), hindari raw key di config/env statis.
+Buat rencana migrasi data lama (re-encrypt bertahap/lazy, dengan tetap menyimpan key_version untuk mendukung dekripsi data lama selama masa transisi).
+Identifikasi kolom mana yang benar-benar butuh exact-match search → terapkan blind index (HMAC) terpisah, bukan mengandalkan ciphertext utama.
+Pastikan audit log mencatat setiap akses dekripsi (siapa, kapan, baris mana) tanpa mencatat plaintext itu sendiri.
+Terapkan least privilege: hanya service tertentu yang boleh memanggil operasi Decrypt pada KMS, dipisahkan dari service yang hanya perlu Encrypt.
+Susun kebijakan rotasi key (KEK dan DEK) beserta prosedur pemulihan (disaster recovery) jika key hilang/HSM tidak tersedia.
+Lakukan penetration test / code review kriptografi sebelum go-live, khususnya memverifikasi tidak ada nonce reuse.
+
+11. Kesimpulan
+Migrasi dari enkripsi deterministik menuju AES-256-GCM dengan nonce/IV acak per operasi, yang dikelola melalui envelope encryption dan KMS, adalah pendekatan standar yang telah terbukti dan lazim dipakai perusahaan-perusahaan enterprise untuk melindungi data rahasia seperti gaji karyawan. Pendekatan ini:
+Memenuhi acceptance criteria — ciphertext dinamis walau plaintext sama, karena randomisasi terletak pada nonce, bukan pada algoritma inti.
+Tidak mengorbankan kemampuan dekripsi — karena nonce disimpan eksplisit per baris, bukan diturunkan/ditebak ulang.
+Selaras dengan praktik industri dan regulasi (PCI DSS, UU PDP/GDPR, ISO 27001), sekaligus membuka jalan untuk kontrol keamanan tambahan seperti key rotation, blind index untuk search, dan tokenization untuk data super-sensitif.
+Trade-off utama yang perlu disepakati bersama tim produk adalah hilangnya kemampuan query langsung berbasis equality/range pada kolom terenkripsi, yang perlu diselesaikan melalui pola tambahan (blind index, filter di application layer, atau pemisahan kolom non-sensitif seperti grade/band) sesuai kebutuhan bisnis riil.
+
+Dokumen ini disusun sebagai bahan kajian teknis internal dan dapat dijadikan acuan awal untuk RFC (Request for Comments) tim engineering sebelum implementasi produksi.
+
+========
+buatkan saya satu algoritma untuh untuk enkripsi/dekripsi (misal : data gaji) beserta fungsi - fungsi modulnya yang diperlukan dalam dua bentuk : sisi database mysql (skema dan query) dan sisi aplikasi (java + maven library jika dibutuhkan)
+=========================================
+
+https://drive.google.com/drive/folders/1OUqVDL2C9BYy6kmetIpmYMVLta0w6VhC?usp=sharing
+
+Merancang sistem enkripsi gaji komprehensif dengan MySQL dan Java Maven
+Merancang sistem enkripsi gaji komprehensif dengan MySQL dan Java Maven
+Sekarang bagian Java (Maven project):
+
+
+Created 6 files
+Created 6 files
+Sekarang lapisan repository (JDBC) yang menghubungkan crypto service dengan MySQL:
+
+
+Repository JDBC untuk operasi CRUD data gaji terenkripsi ke MySQL
+Repository JDBC untuk operasi CRUD data gaji terenkripsi ke MySQL
+Sekarang class Main/App untuk demo end-to-end dan konfigurasi DataSource:
+
+
+Kelas utama demo end-to-end: setup, insert, rotate key, decrypt
+Kelas utama demo end-to-end: setup, insert, rotate key, decrypt
+Sekarang README yang merangkum cara pakai dan menghubungkan dengan seluruh alur:
+
+
+README panduan implementasi dan cara menjalankan proyek
+README panduan implementasi dan cara menjalankan proyek
+Sekarang saya validasi struktur akhir dan salin ke output:
+
+
+Memeriksa struktur file dan keseimbangan kurung kurawal sebagai sanity check
+Memeriksa struktur file dan keseimbangan kurung kurawal sebagai sanity check
+Struktur file lengkap dan balanced. Sekarang saya kemas menjadi zip dan siapkan untuk output:
+
+
+Ran a command, read a file
+Ran a command, read a file
+Isi zip-nya sudah lengkap dua sisi:
+
+Sisi Database (MySQL) — sql/
+
+01_schema.sql: tabel employee, encryption_keys (untuk envelope encryption/wrapped DEK), employee_salary (ciphertext + nonce + key_version), plus opsional blind-index & audit log
+02_queries.sql: query insert/select/update/rotate key siap pakai
+Sisi Aplikasi (Java + Maven) — java-app/
+
+AesGcmCryptoService — modul inti: encrypt() selalu generate nonce baru via SecureRandom, decrypt() pakai nonce yang tersimpan
+KeyManagementService + LocalKmsSimulator — pola envelope encryption (KEK membungkus DEK); tinggal diganti implementasinya ke AWS KMS/Vault untuk production
+SalaryRepository — jembatan JDBC (HikariCP) yang menyatukan encrypt/decrypt dengan query MySQL, termasuk fungsi rotateKey()
+App.java — demo end-to-end yang membuktikan: dua baris dengan gaji sama menghasilkan ciphertext berbeda, tapi tetap terdekripsi benar, bahkan setelah key dirotasi
+Cara pakainya ada di README.md di dalam zip (setup schema, generate KEK, mvn exec:java).
+
+Yang perlu diperhatikan sebelum production: LocalKmsSimulator itu murni untuk demo lokal — di pom.xml sudah saya sediakan dependency AWS KMS SDK (di-comment) yang tinggal diaktifkan begitu KEK sungguhan sudah dikelola HSM/KMS.
+
+
+
+=======
+buatkan saya bab lanjutan dengan melakukan research secara mendalam dan konfrehensif dengan profil sebagai seorang pakar ataupun professor cyber security tentang : 
+
+Judul : Bedah Mekanisme key/token enkripsi yang dapat diubah secara berkala (baik manual maupun sistem terschedule otomatis)
+
+Background:
+
+Saat ini encryption key/token masih di-hardcode pada SQL query. Jika key/token diubah, query harus diperbarui secara manual dan terdapat risiko data yang sebelumnya dienkripsi menggunakan key lama tidak dapat di-decrypt menggunakan key baru.
+
+Acceptance Criteria:
+
+Ubah mekanisme encryption agar key/token tidak di-hardcode pada SQL query.
+Encryption key/token dapat diubah secara berkala tanpa perlu mengubah SQL query.
+Data yang dienkripsi menggunakan key lama tetap dapat di-decrypt setelah key/token baru digunakan.
+Mekanisme harus dapat mengidentifikasi key yang digunakan untuk setiap data agar proses decrypt tetap berjalan dengan benar setelah key rotation.
+Mencari berbagai macam mekanisme terkait secruity key/token yang dapat diubah secara berkala.
+
+============================================================================
+Claude Sonnet 5 Free ~> Effort Medium ~> mode Thingking enabled
+=========================
+
+BAB LANJUTAN
+Bedah Mekanisme Key/Token Enkripsi yang Dapat Diubah Secara Berkala
+(Manual maupun Terjadwal Otomatis)
+
+1. Ringkasan Eksekutif
+Bab ini melanjutkan kajian sebelumnya (Mekanisme, Alur Kerja, dan Prosedur Penyimpanan Data Rahasia Perusahaan) dengan fokus spesifik pada satu titik lemah arsitektural yang sering luput dari perhatian: bagaimana key/token dikelola dari waktu ke waktu, bukan hanya bagaimana ia dipakai sesaat.
+Masalah inti: encryption key/token saat ini di-hardcode langsung pada query SQL atau kode aplikasi. Akibatnya:
+Mengubah key berarti mengubah source code/query secara manual di banyak tempat.
+Ketika key baru diterapkan, seluruh data lama yang dienkripsi dengan key lama berisiko tidak bisa didekripsi lagi, karena tidak ada mekanisme yang mencatat "data ini dienkripsi pakai key yang mana".
+Tidak ada proses rotasi yang aman, terjadwal, atau dapat diaudit.
+Solusi yang dibedah dalam bab ini: pemisahan total antara key material dan kode/query melalui indirection layer (Key Management System dengan konsep key alias dan key versioning), dikombinasikan dengan skema penandaan versi key pada setiap data terenkripsi, sehingga rotasi key — baik manual maupun terjadwal otomatis — dapat dilakukan tanpa menyentuh satu baris SQL query pun, dan tanpa kehilangan kemampuan mendekripsi data lama.
+
+2. Akar Masalah: Anatomi "Hardcoded Key di SQL Query"
+2.1 Pola Antipattern yang Umum Ditemukan
+sql
+-- ❌ ANTIPATTERN: key tertulis langsung di query
+SELECT AES_DECRYPT(salary_ciphertext, 'MyS3cretKey2023!') AS salary
+FROM employee_salary
+WHERE employee_id = 1001;
+java
+// ❌ ANTIPATTERN: key hardcoded di source code aplikasi
+private static final String SECRET_KEY = "MyS3cretKey2023!";
+2.2 Mengapa Ini Berbahaya
+Masalah
+Dampak
+Key tersebar di banyak tempat
+Setiap query/service yang butuh enkripsi punya salinan key sendiri → sulit dipastikan semuanya konsisten.
+Key ikut ter-commit ke version control
+Git history menyimpan key secara permanen meski kemudian "dihapus" dari kode terbaru.
+Tidak ada pemisahan data lama vs baru
+Begitu key diganti di satu tempat, tidak ada cara sistem tahu bahwa baris-baris lama masih memakai key sebelumnya → DECRYPT gagal total (data lockout).
+Rotasi = downtime/migrasi besar
+Karena tidak granular, rotasi key berarti harus stop-the-world: re-enkripsi seluruh tabel sekaligus.
+Tidak ada jejak audit
+Tidak diketahui kapan key terakhir diganti, oleh siapa, dan versi berapa yang sedang dipakai.
+Blast radius besar saat kebocoran
+Satu key bocor = seluruh histori data (lama & baru) yang pernah dienkripsi dengan key itu langsung terancam, tanpa batas waktu.
+
+2.3 Prinsip Kriptografi yang Dilanggar
+Ini melanggar prinsip dasar cryptographic key management dalam NIST SP 800-57 (Recommendation for Key Management): setiap key memiliki masa pakai (cryptoperiod) yang terbatas, dan pergantian key harus menjadi proses rutin yang dapat diprediksi, bukan tindakan darurat yang dilakukan secara ad-hoc dan berisiko.
+
+3. Prinsip Arsitektur Solusi: Key Indirection & Key Versioning
+Untuk menjawab seluruh acceptance criteria, arsitektur solusi bertumpu pada dua konsep fundamental yang saling melengkapi:
+3.1 Key Indirection (Pemisahan Key dari Kode)
+Alih-alih kode/query memuat raw key, kode hanya memuat referensi/alias ke key (key_id, key_alias, atau key_version). Raw key material sepenuhnya dikelola oleh sistem eksternal — KMS/HSM/Vault — dan diambil saat runtime, bukan ditulis statis.
+Sebelum (hardcoded):
+    Query --[langsung berisi]--> "MyS3cretKey2023!"
+
+Sesudah (indirection):
+    Query/Aplikasi --[merujuk]--> key_alias: "salary-encryption-key"
+                                        │
+                                        ▼
+                              KMS/Vault resolves ke
+                              key material versi AKTIF saat ini
+Konsekuensi langsung: mengubah key tidak pernah berarti mengubah query atau kode — cukup memutar (rotate) key di KMS, dan aplikasi otomatis memakai versi terbaru pada operasi enkripsi berikutnya.
+3.2 Key Versioning (Penandaan Versi per Data)
+Setiap kali data dienkripsi, versi key yang dipakai dicatat eksplisit bersama data tersebut (bukan diasumsikan/ditebak). Ini adalah mekanisme yang sudah diletakkan fondasinya pada bab sebelumnya lewat kolom key_version di tabel employee_salary dan tabel encryption_keys.
+data_terenkripsi = { ciphertext, nonce, key_version }
+                                          │
+                                          └──► saat decrypt: sistem tahu
+                                               PERSIS key versi berapa
+                                               yang harus diminta ke KMS
+Inilah jawaban langsung terhadap acceptance criteria keempat: "Mekanisme harus dapat mengidentifikasi key yang digunakan untuk setiap data agar proses decrypt tetap berjalan dengan benar setelah key rotation."
+3.3 Mengapa Dua Konsep Ini Harus Berjalan Bersama
+Key indirection saja tidak cukup — jika hanya alias yang dipakai tapi tidak ada pencatatan versi per baris, sistem tetap akan gagal mendekripsi data lama begitu alias di-resolve ke versi baru. Sebaliknya, key versioning saja tanpa indirection tetap membuat key bocor ke source code. Keduanya bersifat komplementer dan wajib diterapkan bersamaan.
+
+4. Studi Komparatif: Bagaimana Platform KMS Enterprise Menerapkan Rotasi Key
+Untuk menjawab poin riset "mencari berbagai macam mekanisme terkait security key/token yang dapat diubah secara berkala", berikut perbandingan mekanisme nyata yang dipakai oleh penyedia KMS/HSM utama di industri:
+4.1 AWS Key Management Service (AWS KMS)
+Mendukung automatic key rotation untuk symmetric encryption key: setelah diaktifkan, AWS KMS <cite index="5-1">menghasilkan materi kriptografi baru untuk KMS key setiap tahun secara default</cite>, dengan opsi kustomisasi periode rotasi.
+Sejak diperbarui, AWS KMS <cite index="3-1">mendukung periode rotasi kustom antara 90 hingga sekitar 2.560 hari (kurang lebih 7 tahun)</cite>, sehingga perusahaan bisa menyesuaikan dengan kebijakan internal masing-masing, tidak harus mengikuti default tahunan.
+Poin krusial terkait acceptance criteria: <cite index="5-1">saat KMS key yang telah dirotasi dipakai untuk mendekripsi ciphertext, AWS KMS otomatis memakai versi materi key yang sama dengan yang dipakai saat proses enkripsi — pengguna tidak perlu (bahkan tidak bisa) memilih versi key secara manual saat dekripsi</cite>. AWS KMS menyimpan riwayat seluruh versi key secara internal di balik satu key ID/alias yang sama, sehingga dari sisi aplikasi, alamat key yang dipanggil tidak pernah berubah meski materi key di baliknya sudah berganti berkali-kali.
+Selain rotasi otomatis terjadwal, AWS KMS juga menyediakan on-demand rotation — rotasi manual yang bisa dipicu kapan saja (misalnya saat insiden keamanan), tanpa mengubah jadwal rotasi otomatis yang sudah berjalan.
+Riwayat setiap rotasi tercatat dan dapat dipantau melalui layanan audit (CloudTrail/CloudWatch), memenuhi kebutuhan jejak audit yang hilang pada pendekatan hardcoded.
+4.2 HashiCorp Vault — Transit Secrets Engine
+Vault Transit merepresentasikan pola key versioning paling eksplisit dan instruktif untuk dipelajari:
+Setiap key di Transit Engine bersifat versioned: perintah rotasi (vault write -f transit/keys/<nama>/rotate) menghasilkan versi baru, sementara <cite index="14-1">versi-versi sebelumnya tetap tersimpan dalam satu "key ring" yang sama</cite>.
+Ciphertext yang dihasilkan Vault menyertakan nomor versi key secara eksplisit di dalam string ciphertext itu sendiri, dengan format vault:v<versi>:<data terenkripsi> — <cite index="10-1">awalan versi ini menandakan versi key berapa yang dipakai untuk mengenkripsi plaintext, sehingga saat rotasi terjadi, Vault tahu persis versi mana yang harus dipakai untuk proses dekripsi</cite>. Pola ini secara langsung mencontohkan bagaimana "penandaan key per data" idealnya diimplementasikan — mirip dengan kolom key_version pada skema yang dirancang di bab sebelumnya.
+Vault menyediakan dua parameter kontrol penting: min_decryption_version dan min_encryption_version — <cite index="12-1">min_decryption_version menentukan versi ciphertext minimum yang masih diizinkan untuk didekripsi, yang dapat disesuaikan sebagai bagian dari kebijakan rotasi key untuk mencegah salinan ciphertext lama didekripsi lagi bila diperlukan</cite>.
+Vault juga mendukung auto_rotate_period — <cite index="12-1">periode di mana key akan dirotasi secara otomatis; nilai default "0" menonaktifkan rotasi otomatis, sehingga administrator harus secara sadar mengaktifkannya</cite> — mengonfirmasi bahwa rotasi terjadwal maupun manual sama-sama didukung sebagai pilihan operasional.
+Fitur rewrap: <cite index="14-1">operasi rewrap memperbarui ciphertext lama ke versi key terbaru tanpa pernah membuka plaintext-nya ke pemanggil — Vault mendekripsi secara internal dengan versi lama lalu mengenkripsi ulang dengan versi terbaru</cite>. Ini adalah mekanisme kunci untuk migrasi bertahap data lama ke key baru tanpa proses re-enkripsi penuh yang berisiko dan memakan waktu.
+4.3 Google Cloud KMS & Azure Key Vault (Ringkas)
+Google Cloud KMS: mendukung automatic rotation schedule per key (interval dapat dikustomisasi), dengan konsep primary key version — versi yang dipakai untuk operasi enkripsi baru — sementara seluruh versi lama tetap tersedia untuk dekripsi selama belum secara eksplisit dinonaktifkan/dihancurkan.
+Azure Key Vault: mendukung rotation policy berbasis waktu kedaluwarsa (expiry) dan notification sebelum key kedaluwarsa, memungkinkan proses rotasi terjadwal maupun manual dengan riwayat versi yang tetap dapat diakses aplikasi.
+4.4 Sintesis: Pola Umum yang Konsisten di Semua Platform
+Meninjau ketiga/empat platform di atas, ditemukan pola arsitektur yang konsisten — inilah yang menjadi acuan desain solusi pada bab ini:
+Key selalu direferensikan lewat alias/ID yang stabil, tidak pernah lewat raw material langsung.
+Setiap versi key tetap tersimpan (tidak dihapus) selama masih ada data yang mengandalkannya untuk dekripsi.
+Ciphertext atau metadata yang menyertainya selalu membawa penanda versi key, sehingga proses dekripsi bisa "mencari" key yang tepat secara otomatis.
+Rotasi (baik manual maupun terjadwal) hanya mengubah "versi mana yang aktif untuk enkripsi baru", tidak pernah menghapus kemampuan dekripsi versi lama secara langsung.
+Tersedia mode manual (on-demand) dan mode otomatis terjadwal (scheduled) sebagai dua opsi yang saling melengkapi, bukan saling menggantikan.
+
+5. Desain Solusi: Menerapkan Pola Ini pada Kasus Data Gaji Karyawan
+Bagian ini menerjemahkan pola di atas menjadi arsitektur konkret yang membangun di atas skema encryption_keys dan employee_salary yang sudah diperkenalkan sebelumnya.
+5.1 Lapisan Arsitektur
+┌─────────────────────────────────────────────────────────────────┐
+│  APLIKASI (Java)                                                  │
+│  - Tidak pernah menulis raw key di kode/query                     │
+│  - Hanya memanggil: KeyManagementService.getActiveKey()           │
+│                       KeyManagementService.getKeyByVersion(v)     │
+└───────────────────────────┬───────────────────────────────────────┘
+                            │  (key_alias / key_version, BUKAN raw key)
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  KEY MANAGEMENT LAYER (KMS/Vault/HSM)                              │
+│  - Menyimpan & mengelola seluruh versi key (KEK/DEK)               │
+│  - Menjalankan rotasi (manual via API/CLI ATAU terjadwal)         │
+│  - Mencatat audit log setiap akses/rotasi key                      │
+└───────────────────────────┬───────────────────────────────────────┘
+                            │  (wrapped DEK per versi)
+                            ▼
+┌─────────────────────────────────────────────────────────────────┐
+│  DATABASE (MySQL)                                                  │
+│  - Tabel encryption_keys: metadata SETIAP versi DEK (wrapped)      │
+│  - Tabel employee_salary: ciphertext + nonce + key_version         │
+│  - TIDAK ADA satu pun raw key/token tertulis di SQL query           │
+└─────────────────────────────────────────────────────────────────┘
+5.2 Bagaimana Ini Menjawab Setiap Acceptance Criteria
+Acceptance Criteria
+Bagaimana Dipenuhi
+Key/token tidak di-hardcode pada SQL query
+Query SQL (lihat Bab sebelumnya, 02_queries.sql) hanya berisi placeholder parameter (?) untuk salary_ciphertext, salary_nonce, key_version — tidak pernah ada literal key/token di dalam query. Raw key sepenuhnya berada di lapisan aplikasi (sementara), yang diperoleh dari KMS saat runtime.
+Key dapat diubah berkala tanpa mengubah SQL query
+Karena query hanya bekerja dengan kolom generik (key_version sebagai integer, ciphertext/nonce sebagai binary), mengganti key berarti hanya menambah baris baru di encryption_keys (via proses rotasi) — struktur & isi query SQL tidak pernah perlu disentuh.
+Data lama tetap bisa didekripsi setelah key baru dipakai
+Karena setiap baris employee_salary menyimpan key_version miliknya sendiri, dan tabel encryption_keys tidak pernah menghapus versi lama (hanya mengubah status menjadi RETIRED), maka DEK versi lama tetap bisa di-unwrap dan dipakai mendekripsi kapan pun dibutuhkan.
+Mekanisme dapat mengidentifikasi key yang dipakai per data
+Kolom key_version pada setiap baris data adalah source of truth eksplisit — tidak ada tebakan, tidak ada asumsi "pakai key terbaru".
+
+
+6. Mekanisme Rotasi: Manual vs. Terjadwal Otomatis
+6.1 Rotasi Manual (On-Demand)
+Kapan dipakai:
+Respons insiden keamanan (dugaan kebocoran key).
+Pergantian personel yang memiliki akses administratif ke key.
+Kepatuhan terhadap audit yang mewajibkan bukti rotasi baru.
+Karakteristik:
+Dipicu oleh manusia lewat perintah eksplisit (API call, CLI, atau tombol di console KMS/Vault).
+Harus tetap melalui proses approval (misal: memerlukan persetujuan dari security officer) untuk mencegah rotasi yang tidak sah/asal-asalan mengganggu operasional.
+Idealnya tetap tercatat di sistem tiket (ITSM) sebagai bagian dari change management.
+6.2 Rotasi Terjadwal Otomatis (Scheduled)
+Kapan dipakai:
+Kebijakan keamanan rutin (misal: setiap 90 hari, 180 hari, atau 1 tahun — mengikuti prinsip cryptoperiod di NIST SP 800-57).
+Kepatuhan otomatis terhadap standar seperti PCI DSS yang mensyaratkan pergantian key kriptografi secara berkala.
+Mekanisme implementasi yang lazim:
+Pendekatan
+Contoh Nyata
+Native scheduler dari KMS
+AWS KMS EnableKeyRotation dengan RotationPeriodInDays; Vault Transit auto_rotate_period
+Job scheduler di level infrastruktur
+Kubernetes CronJob yang memanggil API rotasi KMS pada interval tertentu
+Job scheduler di level aplikasi
+Library seperti Quartz Scheduler (Java) yang memanggil SalaryRepository.rotateKey() terjadwal
+Orkestrasi CI/CD terjadwal
+Pipeline terjadwal (misal cron di Jenkins/GitLab CI) yang memicu proses rotasi lewat API terkontrol
+
+Penting: rotasi otomatis idealnya tetap hanya mengubah "versi aktif untuk enkripsi baru", bukan langsung memaksa re-enkripsi seluruh data lama secara serentak — ini menghindari beban I/O besar-besaran dan potensi downtime, dan sejalan dengan pola lazy re-encryption yang dibahas lebih lanjut di Bab 7.
+6.3 Menentukan Periode Rotasi yang Tepat
+Tidak ada satu angka yang berlaku universal. Faktor pertimbangan:
+Faktor
+Implikasi terhadap periode rotasi
+Sensitivitas data
+Data super-sensitif (gaji eksekutif, data kesehatan) → periode lebih pendek
+Volume data yang dienkripsi dengan key sama
+Semakin besar volume, semakin besar dampak jika key bocor → rotasi lebih sering
+Regulasi yang berlaku
+PCI DSS, sektor finansial/perbankan biasanya memiliki mandat rotasi eksplisit
+Biaya operasional rotasi
+Rotasi terlalu sering pada arsitektur yang belum matang (misal Vault dengan storage backend terbatas) berisiko menimbulkan beban penyimpanan riwayat versi yang besar
+
+Sebagai titik awal yang wajar untuk data finansial internal seperti gaji karyawan: rotasi KEK setiap 12 bulan (mengikuti default banyak KMS), dengan opsi eskalasi ke rotasi manual kapan pun dibutuhkan di luar jadwal.
+
+7. Alur Kerja Rotasi Key Tanpa Downtime (Zero-Downtime Rotation)
+7.1 Tahapan Proses
+[1] TRIGGER               [2] GENERATE            [3] REGISTER
+    Manual (admin)   ──►      DEK baru       ──►      key_version baru
+    atau terjadwal            (KMS/Vault)             (status: ACTIVE)
+    (scheduler)                                        DEK lama →
+                                                        status: RETIRED
+        │
+        ▼
+[4] TRANSISI TRANSPARAN
+    Operasi ENCRYPT baru otomatis memakai key_version terbaru
+    Operasi DECRYPT tetap merujuk key_version yang tercatat per baris
+    (tidak ada perubahan pada baris data lama)
+        │
+        ▼
+[5] (OPSIONAL) LAZY / BATCH RE-ENCRYPTION
+    Data lama SECARA BERTAHAP di-re-encrypt ke key_version terbaru
+    -- baik saat baris diakses/diubah secara alami (lazy),
+    -- maupun lewat job batch terjadwal di luar jam sibuk (eager/batch)
+7.2 Dua Strategi Migrasi Data Lama
+Strategi
+Cara Kerja
+Kelebihan
+Kekurangan
+Lazy re-encryption
+Baris data di-re-encrypt ke key baru hanya ketika baris tersebut dibaca/diubah secara natural oleh aplikasi
+Tidak ada beban migrasi mendadak, berjalan organik
+Baris yang jarang diakses bisa tetap memakai key lama untuk waktu sangat lama
+Batch/eager re-encryption
+Job terjadwal (misal di luar jam kerja) secara aktif membaca seluruh baris dengan key_version lama, mendekripsi, lalu mengenkripsi ulang dengan key terbaru
+Migrasi tuntas dalam jangka waktu terkendali, cocok untuk kepatuhan yang mensyaratkan "tidak ada data yang memakai key kedaluwarsa"
+Butuh perencanaan beban (I/O, downtime jendela maintenance), harus dilakukan bertahap per batch agar tidak membebani database produksi
+
+Kombinasi keduanya (hybrid) adalah pola paling umum di enterprise: lazy re-encryption berjalan otomatis dari operasional harian, dilengkapi job batch terjadwal berkala (misal bulanan) untuk "menyapu" sisa data yang belum ter-migrasi secara alami, sehingga jumlah versi key aktif yang harus tetap didukung sistem tidak terus bertambah tanpa batas.
+7.3 Kapan Versi Key Lama Benar-Benar Boleh Dipensiunkan Total (Revocation)
+Sebuah key_version baru boleh dianggap aman untuk dihapus/direvoke permanen (bukan sekadar RETIRED) hanya setelah dipastikan tidak ada satu pun baris data yang masih menyimpan key_version tersebut — diverifikasi lewat query audit:
+sql
+SELECT key_version, COUNT(*) AS jumlah_baris_tersisa
+FROM employee_salary
+WHERE key_version = ?
+GROUP BY key_version;
+Jika hasilnya nol, barulah proses revocation (analog dengan menaikkan min_decryption_version pada Vault Transit) dapat dilakukan dengan aman.
+
+8. Perluasan Implementasi: Scheduler Rotasi Otomatis (Java)
+Bagian ini melengkapi kode SalaryRepository.rotateKey() yang sudah dibangun di bab sebelumnya dengan lapisan penjadwalan otomatis, membuktikan acceptance criteria "key dapat diubah secara berkala" dapat berjalan tanpa intervensi manual.
+8.1 Dependency Tambahan (pom.xml)
+xml
+<!-- Quartz Scheduler: menjalankan rotasi key sesuai jadwal (cron expression) -->
+<dependency>
+    <groupId>org.quartz-scheduler</groupId>
+    <artifactId>quartz</artifactId>
+    <version>2.3.2</version>
+</dependency>
+8.2 Job Rotasi Terjadwal
+java
+package com.company.kms;
+
+import com.company.repository.SalaryRepository;
+import org.quartz.Job;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
+
+/**
+ * Job Quartz yang menjalankan rotasi key secara otomatis sesuai jadwal.
+ * Tidak ada key/token yang ditulis di sini -- job ini hanya MEMICU
+ * proses rotasi; key material sepenuhnya dikelola oleh
+ * KeyManagementService/KMS.
+ */
+public class KeyRotationJob implements Job {
+
+    @Override
+    public void execute(JobExecutionContext context) throws JobExecutionException {
+        try {
+            SalaryRepository repository =
+                    (SalaryRepository) context.getJobDetail()
+                            .getJobDataMap().get("salaryRepository");
+
+            int newVersion = repository.rotateKey();
+
+            System.out.println("[KeyRotationJob] Rotasi berhasil. "
+                    + "key_version aktif baru: " + newVersion
+                    + " pada " + java.time.LocalDateTime.now());
+
+            // Rekomendasi: kirim notifikasi ke tim keamanan/observability
+            // (Slack/email/monitoring) setiap kali rotasi terjadi,
+            // sebagai bagian dari audit trail operasional.
+
+        } catch (Exception e) {
+            throw new JobExecutionException("Gagal menjalankan rotasi key terjadwal", e);
+        }
+    }
+}
+8.3 Konfigurasi Jadwal (Contoh: Rotasi Setiap 90 Hari)
+java
+package com.company.kms;
+
+import com.company.repository.SalaryRepository;
+import org.quartz.*;
+
+import static org.quartz.JobBuilder.newJob;
+import static org.quartz.TriggerBuilder.newTrigger;
+import static org.quartz.SimpleScheduleBuilder.simpleSchedule;
+
+public class KeyRotationScheduler {
+
+    public static void schedule(SalaryRepository repository) throws SchedulerException {
+        Scheduler scheduler = org.quartz.impl.StdSchedulerFactory.getDefaultScheduler();
+
+        JobDetail job = newJob(KeyRotationJob.class)
+                .withIdentity("salaryKeyRotationJob", "security")
+                .usingJobData(new JobDataMap(java.util.Map.of("salaryRepository", repository)))
+                .build();
+
+        Trigger trigger = newTrigger()
+                .withIdentity("salaryKeyRotationTrigger", "security")
+                // Rotasi setiap 90 hari -- sesuaikan dengan kebijakan cryptoperiod perusahaan
+                .withSchedule(simpleSchedule()
+                        .withIntervalInHours(90 * 24)
+                        .repeatForever())
+                .build();
+
+        scheduler.scheduleJob(job, trigger);
+        scheduler.start();
+
+        System.out.println("[KeyRotationScheduler] Rotasi otomatis dijadwalkan setiap 90 hari.");
+    }
+}
+Alternatif setara di level infrastruktur (lebih umum dipakai di lingkungan cloud-native): daripada scheduler tertanam di aplikasi, gunakan Kubernetes CronJob yang memanggil endpoint internal /admin/rotate-key pada interval yang sama, atau — jika memakai KMS eksternal seperti AWS KMS — cukup aktifkan EnableKeyRotation pada KEK di KMS, karena rotasi KEK di level KMS akan otomatis diikuti oleh proses unwrap DEK yang tetap benar tanpa mengubah aplikasi sama sekali (lihat Bab 4.1).
+8.4 Endpoint Rotasi Manual (Melengkapi Mode Otomatis)
+java
+package com.company;
+
+import com.company.repository.SalaryRepository;
+
+/**
+ * Contoh endpoint administratif untuk memicu rotasi MANUAL.
+ * Di production, endpoint ini WAJIB dilindungi otorisasi ketat
+ * (misal role SECURITY_ADMIN) dan tercatat di audit log terpisah.
+ */
+public class KeyRotationAdminController {
+
+    private final SalaryRepository repository;
+
+    public KeyRotationAdminController(SalaryRepository repository) {
+        this.repository = repository;
+    }
+
+    public String triggerManualRotation(String requestedBy) throws Exception {
+        int newVersion = repository.rotateKey();
+        // TODO: catat ke tabel audit terpisah: siapa, kapan, versi berapa
+        return "Rotasi manual berhasil oleh " + requestedBy
+                + ". key_version aktif baru: " + newVersion;
+    }
+}
+
+9. Pertimbangan Kepatuhan & Tata Kelola (Governance)
+Aspek
+Rekomendasi
+Segregation of duties
+Orang yang memicu rotasi manual sebaiknya berbeda dari orang yang memiliki akses langsung ke data plaintext, mengurangi risiko penyalahgunaan.
+Audit trail rotasi
+Setiap rotasi (manual maupun otomatis) tercatat: siapa/apa yang memicu, kapan, key_version lama → baru. Tabel encryption_keys yang sudah dirancang (kolom created_at, retired_at, status) mendukung ini secara native.
+Notifikasi & observability
+Tim keamanan idealnya menerima notifikasi setiap kali rotasi terjadi (baik terjadwal maupun manual) untuk mendeteksi anomali (misal rotasi di luar jadwal yang tidak diketahui asalnya).
+Disaster recovery
+Prosedur pemulihan harus mencakup skenario: bagaimana jika KMS/Vault yang menyimpan KEK tidak dapat diakses? Perlu strategi backup KEK yang aman (misal key ceremony dengan split-knowledge di HSM enterprise).
+Dokumentasi cryptoperiod
+Kebijakan tertulis mengenai periode rotasi per kategori data (mengacu NIST SP 800-57), bukan angka yang dipilih sembarangan.
+
+
+10. Kesalahan Umum yang Harus Dihindari
+Menghapus key_version lama terlalu cepat — sebelum dipastikan tidak ada baris data yang masih bergantung padanya (lihat query verifikasi di Bab 7.3).
+Menganggap "rotasi KEK" sama dengan "re-enkripsi seluruh data" — keduanya adalah proses yang berbeda; rotasi KEK hanya mengganti "pembungkus" DEK, sedangkan re-enkripsi data adalah proses terpisah dan opsional yang dilakukan bertahap.
+Menaruh jadwal rotasi hanya di satu tempat tanpa dokumentasi — jika scheduler aplikasi mati/di-deploy ulang tanpa konfigurasi ulang, rotasi terjadwal bisa diam-diam berhenti tanpa disadari; perlu monitoring aktif terhadap "tanggal rotasi terakhir".
+Rotasi tanpa proses approval untuk kasus manual — membuka celah rotasi yang dipicu tanpa otorisasi jelas.
+Tidak menyediakan mekanisme darurat (break-glass) — jika terjadi insiden dan rotasi normal tidak memadai, harus ada prosedur rotasi darurat yang tetap terkontrol dan tercatat.
+
+11. Kesimpulan
+Migrasi dari key/token yang di-hardcode pada SQL query menuju arsitektur key indirection (alias/ID yang stabil) dikombinasikan dengan key versioning eksplisit per baris data adalah pola yang konsisten ditemukan pada seluruh platform KMS/HSM enterprise terkemuka (AWS KMS, HashiCorp Vault Transit, Google Cloud KMS, Azure Key Vault). Pola ini:
+Menghapus total kebutuhan mengubah SQL query saat key berganti — query hanya bekerja dengan kolom generik (ciphertext, nonce, key_version), tidak pernah dengan literal key.
+Menjamin data lama tetap terdekripsi — karena versi key lama tidak pernah dihapus selama masih dirujuk oleh data yang ada, dan penanda versi disimpan eksplisit per baris.
+Mendukung dua mode rotasi sekaligus — manual (on-demand, untuk respons insiden) dan otomatis terjadwal (untuk kepatuhan rutin) — tanpa keduanya saling meniadakan.
+Selaras dengan prinsip cryptoperiod pada NIST SP 800-57 dan praktik kepatuhan industri (PCI DSS, ISO 27001) yang mensyaratkan rotasi key sebagai proses rutin yang dapat diaudit, bukan tindakan darurat yang jarang dilakukan.
+Bab lampiran teknis berikutnya dapat memperluas implementasi ini dengan skenario re-encryption batch job penuh dan integrasi langsung dengan AWS KMS/HashiCorp Vault sungguhan (menggantikan LocalKmsSimulator yang sebelumnya hanya untuk demo), jika dibutuhkan sebagai kelanjutan pekerjaan implementasi produksi.
+
+Dokumen ini merupakan kelanjutan dari kajian teknis "Mekanisme, Alur Kerja, dan Prosedur Penyimpanan Data Rahasia Perusahaan" dan disusun sebagai bahan RFC internal tim engineering. ~ Angga Purwana AMd., SKom.
+
+==
+next : Pandu saya membuat struktur project ....
+==
+
+
+
+
+
+
