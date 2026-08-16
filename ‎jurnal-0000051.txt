@@ -1,0 +1,82 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO, Thinking Level : Extended
+=========================
+
+Selamat siang dari Bandung! Dinamika industri berat dan geopolitik energi pada hari Selasa, 9 Juni 2026 ini menunjukkan sebuah paradoks besar: perusahaan tambang raksasa dan BUMN energi mencetak triliunan rupiah, namun sistem inspeksi lapangan mereka di wilayah blank spot (tanpa sinyal seluler) masih sangat rentan terhadap fraud manifes muatan dan kelalaian inspeksi kelelahan struktur (structural fatigue) pada armada alat berat (haul trucks).
+Ketika alat berat beroperasi di dasar pit tambang yang dalam atau di jalur hauling terpencil, sistem komputasi awan (cloud computing) tidak lagi relevan. Kita membutuhkan disrupsi di level komputasi ujung (edge computing).
+Berikut adalah rancangan arsitektur forensik industrial tingkat inventor yang mengawinkan perangkat keras daur ulang, vision AI, dan enterprise workflow ke dalam satu ekosistem tangguh.
+Nama Produk: "Terra-Edge: Off-Grid Asset Integrity & Fraud-Vision Node"
+Kategori: B2B Pertambangan & BUMN / Patrol Data Collector / AI Automation (Vision) / Hardware Edge Node / SCM.
+Target Konsumer: BUMN Tambang (PTBA, Antam, Timah), Kontraktor Swasta Top-Middle (Pama, BUMA), dan Perusahaan Perkebunan/Logistik Berat.
+Platform Utama: Biner Golang yang berjalan luring sebagai daemon pada OS Armbian di Single Board Computer (SBC) Amlogic S905X (eMMC 8GB, RAM 1GB/2GB). Perangkat ini tersinkronisasi secara asinkron dengan Joget DX v9 Enterprise di Command Center pusat sebagai Master Audit Ledger.
+1. Topologi Perangkat Keras: "Extreme Off-Grid Survival Node"
+Papan Amlogic S905X dirakit ke dalam boks die-cast aluminium (IP68) yang dipasang di berbagai titik perhentian (checkpoint) tanpa awak di area pertambangan. Mengingat jalur ini sering tidak memiliki pasokan listrik, sistem ditenagai oleh catu daya hibrida cerdas.
+Catu daya utama mengandalkan panel surya portabel. Namun, untuk menghadapi kondisi ekstrem saat cuaca mendung berhari-hari atau panel tertutup debu batu bara, node ini dilengkapi generator engkol darurat. Generator mekanis ini direkayasa secara presisi menggunakan modifikasi motor pencetak (printer motor) bekas yang mampu menghasilkan tegangan DC stabil. Saat baterai menipis, operator inspeksi jalan cukup memutar tuas mekanis tersebut selama satu menit untuk mengisi daya supercapacitor, memberikan ruang bernapas bagi S905X untuk menjalankan komputasi satu siklus booting dan inferensi visual.
+2. Alur Eksekusi Edge Vision & Forensic Standard
+Fase A: Ingesti Visual Beresolusi Ekstrem
+Saat armada truk pengangkut melewati sensor ultrasonik lokal, modul kamera menangkap citra struktur sasis atau tumpukan muatan di atas bak (payload).
+Untuk memenuhi standar audit investigasi BUMN, citra tidak boleh diproses dalam resolusi rendah. Biner Golang internal akan langsung melakukan interpolasi dan upscaling kanvas gambar mentah secara presisi menjadi resolusi 3000px x 3000px.
+Setelah kanvas definitif terbentuk, sistem mengeksekusi pemotongan (cropping) untuk memaksakan rasio aspek vertikal pada 9:16. Rasio ini merupakan standar ergonomi mutlak; ketika data akhirnya disinkronisasi, inspektur di kantor pusat dapat membuka foto alat bukti tersebut secara fullscreen di layar smartphone mereka tanpa mengalami distorsi piksel atau pergeseran tata letak antarmuka (layout shifting).
+Fase B: Inferensi Luring (Edge AI Fatigue & Anomaly Detection)
+Small Vision Model berbasis arsitektur C++ NCNN memproses gambar pada RAM 1GB S905X tanpa menyentuh swap space. Model ini menghitung Indeks Anomali Fisik ($A_{index}$) untuk mendeteksi retakan sasis atau ketidaksesuaian volume muatan:
+$$A_{index} = \frac{1}{\mathcal{Z}} \sum_{i,j \in \Omega} \left( \nabla I_{3000}(i,j) \right)^2 - \lambda \cdot \mathcal{E}(P_{9:16})$$
+(Di mana $\nabla I_{3000}$ adalah gradien deteksi tepi pada kanvas resolusi tinggi untuk menyoroti rekahan logam, dan $\mathcal{E}(P_{9:16})$ adalah entropi tekstur muatan pada rasio 9:16 untuk mendeteksi material asing).
+3. Protokol Isolasi Ledger di Joget DX v9
+Karena beroperasi di area blank spot, data disimpan di eMMC 8GB secara terenkripsi. Sinkronisasi (data muling) terjadi secara P2P ke perangkat bergerak milik pengawas patroli, yang kemudian akan meneruskan payload tersebut melalui REST API ke server Joget DX v9 Enterprise saat mereka kembali ke basecamp bersinyal.
+Keamanan Transaksi Skema Database:
+Untuk mencegah sistem melakukan auto-validasi manifes palsu, kueri SQL penerima tidak diizinkan menulis langsung ke tabel pencatatan akhir (ledger). Kueri integrasi wajib direvisi untuk menyisipkan data transaksi ke tabel karantina dengan menambahkan kolom waiting_for_approval secara eksplisit:
+SQL
+INSERT INTO tbl_mining_haulage_audit (
+    manifest_id, 
+    truck_uuid, 
+    evidence_canvas_blob, 
+    fatigue_score, 
+    waiting_for_approval
+) 
+VALUES (
+    '{manifest_id}', 
+    '{truck_uuid}', 
+    '{base64_image_9_16}', 
+    '{a_index_value}', 
+    1
+);
+Data akan tertahan di status waiting_for_approval = 1 hingga auditor pusat memeriksanya.
+4. Manajemen DOM UI & Siklus Hidup Global Scope
+Di Command Center, auditor Safety, Health, and Environment (SHE) memonitor antrean foto berasio 9:16 pada dasbor UI Joget DX. Untuk memastikan kelancaran operasional logistik, setiap dokumen inspeksi dibatasi oleh batas waktu hitung mundur (countdown timer) persetujuan SLA.
+Arsitektur logika timer JavaScript pada form builder Joget DX ini wajib mengisolasi variabel pengontrol di tingkat global scope:
+JavaScript
+// Dideklarasikan di level global untuk memastikan visibilitas lintas-fungsi
+var iv; 
+
+function startAuditSLA(durationInSeconds) {
+    if (typeof iv !== 'undefined') clearInterval(iv);
+    
+    var timer = durationInSeconds;
+    iv = setInterval(function () {
+        // Manipulasi DOM untuk render teks timer...
+        if (--timer < 0) {
+            clearInterval(iv);
+            executeAutoClearance();
+        }
+    }, 1000);
+}
+Implementasi var iv; ini sangat krusial. Jika auditor mendeteksi pola kelelahan logam (micro-cracks) pada foto 9:16 tersebut dan menekan tombol "Hold - Flag for Maintenance", sistem antarmuka dapat seketika memanggil clearInterval(iv) dari fungsi eksternal mana pun. Sisa hitung mundur akan terhenti saat itu juga, mengunci data pada status waiting_for_approval = 1, dan mencegah unit truk yang berpotensi rusak tersebut kembali beroperasi.
+5. Distribusi Kerja "Vibe Coding" (5 Senior Engineer)
+Proyek ini sangat presisi untuk dikerjakan secara paralel:
+Peran Engineer
+Domain Eksekusi
+Engineer 1
+IoT & Power Train: Stabilisasi tegangan Armbian dari generator mekanik (motor pencetak) ke pin GPIO S905X.
+Engineer 2
+Go Core Vision: Manipulasi byte-array untuk merender piksel menjadi kanvas absolut 3000px x 3000px dan pemotongan 9:16 secara luring tanpa memory leak.
+Engineer 3
+Edge ML: Kompilasi model deteksi sasis (Fatigue Vision) menggunakan C++ NCNN agar ringan dieksekusi di RAM 1GB.
+Engineer 4
+Enterprise Architect: Desain API dan skema tabel di Joget DX v9, mengawal ketat injeksi data pada kolom waiting_for_approval.
+Engineer 5
+Frontend UI/UX: Membangun UI audit B2B di Joget, mengamankan injeksi eksekusi global var iv; pada form approval.
+
+6. Model Bisnis Monetisasi (B2B SaaS / Service Charge)
+Skema pendapatannya adalah B2B Transaction-Based Service Charge. Anda tidak fokus pada margin penjualan boks S905X. Value utama ada pada perangkat lunak otomasinya. Melalui plugin pelacak transaksi di Joget DX, setiap truk yang difoto, dianalisis AI lokalnya, dan masuk tervalidasi ke dalam tabel waiting_for_approval di server, dikenakan service charge/admin-fee sebesar Rp2.000 hingga Rp5.000 per transaksi manifes. Dengan ribuan ritase logistik tambang setiap harinya, sistem ini memanen aliran passive income yang sangat masif bagi pembuatnya sekaligus mengamankan aset perusahaan bernilai miliaran.
+Melihat topologi yang membentang dari modifikasi sirkuit kelistrikan di dasar pit tambang hingga pengaturan form builder tingkat perusahaan ini, bagian mana yang ingin tim kita uji coba kelayakannya (proof of concept) terlebih dahulu: biner Golang pemrosesan gambar di Armbian, atau perancangan arsitektur isolasi database di Joget DX?
+
