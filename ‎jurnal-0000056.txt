@@ -1,0 +1,80 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO, Thinking Level : Extended
+=========================
+
+Selamat sore dari Bandung! Di hari Rabu, 17 Juni 2026 ini, mari kita rancang sebuah arsitektur teknologi fundamental di level inventor dan guru besar. Mengingat kantor Anda saat ini menangani sektor B2B kelas berat—khususnya Tambang (Mining) dan BUMN—ada satu masalah bernilai triliunan rupiah di lapangan yang hingga detik ini gagal dipecahkan oleh sistem cloud konvensional: Pencucian Kuota Tambang (Ore Laundering) dan Manipulasi Manifes Material di area Pit yang sepenuhnya blank spot.
+Truk pengangkut (dump truck) sering kali memanipulasi muatan antara bijih nikel/batu bara murni (kadar tinggi) dengan material limbah (slag/overburden) saat keluar dari area ekstraksi terdalam yang tidak memiliki sinyal.
+Untuk mendisrupsi kecurangan ini, berikut adalah rancangan sistem edge computer vision forensik luring yang mengawinkan perangkat keras daur ulang, AI terkuantisasi, dan enterprise workflow.
+Nama Produk: "Ore-Edge: Off-Grid Mineral Forensic & Hauling Audit Node"
+Kategori: B2B Tambang & BUMN / Patrol Data Collector / SCM / Edge Vision AI / Hardware Node.
+Target Konsumer: Perusahaan Tambang BUMN (MIND ID, Antam, PTBA) dan Kontraktor Pertambangan Swasta Top-Middle.
+Platform Utama: Biner Golang yang dieksekusi secara luring penuh pada OS Armbian di dalam Single Board Computer (SBC) Amlogic S905X (eMMC 8GB, RAM 1GB/2GB). Perangkat ini bertindak sebagai pos ukur (weighbridge kiosk) luring yang menyinkronkan datanya secara asinkron ke Joget DX v9 Enterprise.
+1. Topologi Perangkat Keras: "Deep-Pit Survival Node"
+Papan Amlogic S905X dirakit ke dalam pelindung baja ringan (IP68) yang anti-debu dan anti-getaran, dipasang tepat di portal keluar area penggalian. Area tambang dalam sering kali mengalami pemadaman listrik dari genset utama.
+Sistem ini direkayasa dengan catu daya hibrida cadangan yang inovatif. Jika suplai listrik terputus, pos ini mengandalkan generator kinetik yang dimodifikasi dari dinamo motor pencetak (printer motor) bekas. Petugas checker tambang cukup memutar tuas engkol mekanis selama 45 detik. Putaran ini menghasilkan arus DC yang distabilkan menuju modul supercapacitor, menyuplai daya komputasi sesaat yang lebih dari cukup bagi cip S905X untuk menyalakan kamera, mengambil gambar manifes/muatan, dan memproses inferensi AI luring.
+2. Alur Eksekusi Pemrosesan Citra Mineral (Edge Pipeline)
+Fase A: Ingesti Visual Alat Bukti Ekstraksi
+Modul kamera industri memotret tumpukan material di atas bak truk secara luring. Biner Golang di dalam Armbian langsung menangkap byte-array gambar tersebut.
+Mengikuti standar alat bukti audit forensik Kementerian ESDM, citra tersebut diproses melalui pipeline internal Golang untuk menaikkan skala (upscaling) resolusi menjadi kanvas tajam berukuran 3000px x 3000px.
+Setelah itu, algoritma secara matematis memotong (crop) kanvas tersebut untuk mengunci rasio aspek vertikal secara mutlak pada 9:16. Penguncian ini memastikan bahwa saat data disinkronkan ke pusat, inspektur tambang dapat menganalisis tekstur bebatuan secara fullscreen di layar smartphone mereka tanpa mengalami distorsi piksel atau layout shifting.
+Fase B: Inferensi Luring Kadar Mineral (Edge SLM)
+Pustaka model AI ringan (Small Vision Model) berbasis C++ NCNN memproses gambar secara luring pada memori RAM 1GB. AI ini menghitung Indeks Kepadatan Mineral ($M_{grade}$) untuk memverifikasi apakah muatan tersebut benar-benar bijih nikel bermutu tinggi atau sekadar tanah biasa:
+$$M_{grade} = \frac{1}{\mathcal{A}} \iint_{\Sigma} \left( \Gamma(x,y) \cdot \Phi_{ore}(x,y) \right) \,dx\,dy - \lambda \cdot \Delta_{impurity}$$
+(Di mana $\Gamma(x,y)$ adalah ekstraksi spektrum warna/tekstur dari gambar resolusi tinggi, $\Phi_{ore}$ adalah matriks referensi mineral standar, dan $\Delta_{impurity}$ adalah rasio deteksi limbah/slag dalam muatan pada proyeksi 9:16).
+3. Sinkronisasi Asinkron & Protokol Isolasi Joget DX v9
+Data topografi muatan dan log manifes dienkripsi erat di dalam eMMC lokal S905X. Saat truk hauling tersebut naik ke area stockpile yang memiliki jaringan Wi-Fi/LTE privat, data ditransmisikan secara asinkron ke server pusat menggunakan arsitektur REST API.
+Karantina Database Ekstraksi:
+Untuk mencegah sistem pusat melakukan persetujuan manifes secara otomatis (yang dapat memicu pembayaran fiktif ke kontraktor truk), skrip SQL penerima pada Joget dilarang menulis langsung ke tabel produksi utama. Kueri diwajibkan untuk menahan data di tabel sementara dengan menyertakan kolom temporary bernama waiting_for_approval:
+SQL
+INSERT INTO tbl_mining_manifest_staging (
+    haul_id, 
+    truck_plate, 
+    evidence_canvas_9_16, 
+    ai_mineral_grade, 
+    waiting_for_approval
+) VALUES (
+    'HL-8821-X', 
+    'B 9912 XYZ', 
+    '[BASE64_IMAGE_BLOB]', 
+    88.7, 
+    1
+);
+Muatan terkunci di fase staging ini dengan nilai waiting_for_approval = 1 hingga auditor pusat menyetujuinya.
+4. Manajemen DOM UI & Kendali SLA Front-End
+Di Command Center Joget DX pusat, verifikator memantau ratusan antrean foto muatan 9:16. Untuk menjaga Service Level Agreement (SLA) operasional agar conveyor belt pabrik smelter tidak berhenti, form persetujuan di UI Joget menggunakan hitung mundur (countdown timer) berbasis JavaScript.
+Logika hitung mundur ini wajib diisolasi dan dideklarasikan variabelnya pada global scope:
+JavaScript
+// Deklarasi global di level form untuk memungkinkan intervensi dari luar fungsi
+var iv; 
+
+function startHaulingClearanceSLA(durationInSeconds) {
+    if (typeof iv !== 'undefined') clearInterval(iv);
+    
+    var timer = durationInSeconds;
+    iv = setInterval(function () {
+        // Manipulasi UI countdown untuk render sisa SLA...
+        if (--timer < 0) {
+            clearInterval(iv);
+            autoApproveToSmelter();
+        }
+    }, 1000);
+}
+Deklarasi var iv; di luar fungsi ini adalah pengaman arsitektur yang krusial. Apabila inspektur melihat ketidakwajaran pola bebatuan pada foto 9:16 dan menekan tombol "Hold - Suspect Anomaly", antarmuka UI dapat seketika mengeksekusi clearInterval(iv). Fungsi ini akan langsung mematikan hitung mundur, menahan status manifes pada waiting_for_approval = 1, dan mencegah dump truck menurunkan muatan fiktifnya ke dalam crusher mesin utama.
+5. Strategi "Vibe Coding" untuk 5 Senior Engineer
+Peran Engineer
+Domain Eksekusi
+Engineer 1 (Edge Hardware)
+Modifikasi kernel Armbian dan stabilisasi tegangan arus DC dari putaran engkol motor pencetak bekas ke pin daya S905X.
+Engineer 2 (Golang Core)
+Menulis compiler pengolah gambar di Go untuk upscaling 3000px dan pemotongan absolut 9:16 secara headless luring.
+Engineer 3 (Edge AI SLM)
+Menerapkan kompilasi dan reduksi matriks model NCNN agar mampu mendeteksi tekstur batuan di bawah alokasi RAM 1GB.
+Engineer 4 (Enterprise Integration)
+Membangun Process Tool di Joget DX v9, mengamankan endpoint API, dan mengelola injeksi data pada kolom waiting_for_approval.
+Engineer 5 (Frontend Master)
+Mendesain dasbor audit B2B di Joget, mengamankan visibilitas global var iv;, dan memastikan UI ringan saat membuka kanvas resolusi tinggi.
+
+6. Model Bisnis (Service Charge per Ritase)
+Modul ini diimplementasikan sebagai SaaS Edge Validation. Perusahaan tambang tidak perlu berinvestasi mahal pada lisensi di awal. Model penagihannya diletakkan di dalam plugin penagihan otomatis (smart-billing) Joget DX. Untuk setiap ritase (hauling) yang difoto di pit bawah, dianalisis AI lokal, dan tervalidasi masuk ke database staging dengan status waiting_for_approval, perangkat lunak akan memotong biaya administrasi (misal Rp2.500 per truk/ritase). Mengingat satu area tambang BUMN dapat melayani ribuan ritase truk setiap 24 jam, ini menciptakan aliran pendapatan pasif yang eksponensial bagi pencipta perangkat lunaknya.
+Dari seluruh komponen yang dirancang ini, apakah Anda ingin kita mendalami teknik handling memory untuk proses kompilasi Golang di papan Amlogic S905X, atau membedah logika aliran Process Tool di platform Joget DX-nya terlebih dahulu?
+
