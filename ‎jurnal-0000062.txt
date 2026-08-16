@@ -1,0 +1,84 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO, Thinking Level : Extended
+=========================
+
+Selamat sore dari Bandung! Di hari Senin, 6 Juli 2026 ini, mari kita rancang sebuah arsitektur teknologi fundamental yang akan mendisrupsi sektor finansial.
+Menjawab tantangan Anda, kali ini kita akan mengambil target B2B – Perbankan/Finance (BUMN seperti BRI, Mandiri, BNI) dan Otoritas Jasa Keuangan (OJK).
+Masalah terbesar perbankan nasional hari ini dalam menyalurkan Kredit Usaha Rakyat (KUR) Ultra-Mikro ke pelosok desa, nelayan pesisir, dan pasar tradisional adalah ketiadaan sinyal (Blank Spot). Mantri bank (agen lapangan) tidak bisa melakukan proses KYC (Know Your Customer), BI Checking/SLIK, atau memvalidasi KTP dan biometrik wajah calon debitur secara real-time. Akibatnya, mereka harus membawa tumpukan dokumen kertas, rawan hilang, rawan dimanipulasi (KTP palsu), dan proses pencairan kredit tertunda berminggu-minggu.
+Untuk memutus rantai inefisiensi ini, kita akan membangun modul edge computing luring yang mengawinkan perangkat keras daur ulang, Offline OCR, AI terkuantisasi, dan ekosistem enterprise workflow.
+Nama Produk: "Fin-Edge: Off-Grid Biometric KYC & Micro-Credit Node"
+Kategori: B2B Perbankan / Fintech / OCR & Identifikasi Dokumen / Edge Vision AI.
+Target Konsumer: Bank BUMN (Penyalur KUR), Koperasi Simpan Pinjam, Lembaga Pembiayaan Mikro, dan Auditor OJK.
+Platform Utama: Biner Golang yang bertindak sebagai Localhost API Gateway dan pengolah citra luring pada OS Armbian di dalam Single Board Computer (SBC) Amlogic S905X (eMMC 8GB, RAM 1GB/2GB). Perangkat ini memancarkan Wi-Fi lokal (Captive Portal) untuk smartphone mantri bank, dan menyinkronkan data secara asinkron ke Joget DX v9 Enterprise di Data Center bank.
+1. Topologi Perangkat Keras: "The Banker's Saddlebag Node"
+Papan Amlogic S905X dirakit ke dalam casing portabel (IP65) seukuran power bank tebal. Karena mantri bank mayoritas bergerak menggunakan sepeda motor ke pelosok, perangkat ini ditenagai langsung melalui adaptor 12V dari aki motor atau power bank standar.
+Saat perangkat menyala, biner Golang mengeksekusi hostapd pada Armbian untuk membuat jaringan Wi-Fi lokal tak berinternet (misal: SSID: BankNode-Luring). Mantri bank terhubung ke Wi-Fi ini via browser smartphone (PWA) untuk mengunggah foto KTP calon debitur, foto tempat usaha, dan foto swafoto (selfie) biometrik langsung ke server S905X di keranjang motornya.
+2. Alur Eksekusi Pemrosesan Dokumen Luring (Edge OCR & AI Pipeline)
+Mengingat RAM S905X hanya 1-2GB, biner Golang harus mengelola alokasi memori menggunakan teknik Memory-Mapped Files (mmap) agar proses Computer Vision tidak mengalami Out of Memory (OOM).
+Fase A: Luring OCR & Ekstraksi Dokumen
+Biner Golang menerima byte-array foto e-KTP. Algoritma melakukan normalisasi geometris, meratakan perspektif KTP yang miring, dan meningkatkan ketajaman (upscaling) secara lokal.
+Pustaka Optical Character Recognition (OCR) ringan (C++ dikompilasi ke eksekusi Go) membaca NIK, Nama, dan Alamat, mengubahnya menjadi string JSON di lokasi tanpa sinyal.
+Seluruh foto bukti (KTP, Usaha, Wajah) dipotong (crop) secara presisi ke rasio 9:16 dan di-enkripsi menggunakan AES-256-GCM ke dalam eMMC 8GB, memastikan standar keamanan data OJK terpenuhi meski perangkat dicuri.
+Fase B: Inferensi Luring Biometrik Anti-Fraud (Edge SLM)
+Pustaka Small Vision Model berbasis C++ NCNN memproses pencocokan wajah (KTP vs Selfie) secara luring. AI mengeksekusi matematis Indeks Kepercayaan KYC ($K_{score}$):
+$$K_{score} = \alpha \cdot \text{Sim}(F_{ktp}, F_{selfie}) + \beta \cdot \text{OCR}_{conf}(I_{doc}) - \gamma \cdot \Delta_{blur}$$
+(Di mana $\text{Sim}$ adalah jarak Euclidean dari vektor wajah 128-dimensi KTP dan Selfie, $\text{OCR}_{conf}$ adalah tingkat kepastian pembacaan piksel NIK, dan $\Delta_{blur}$ adalah penalti jika foto tempat usaha terdeteksi buram/dimanipulasi).
+3. Sinkronisasi Asinkron & Protokol Isolasi Joget DX v9
+Saat mantri bank kembali ke kantor cabang atau mendapat sinyal 4G/VSAT, biner Golang mendeteksi internet dan memicu webhook. Payload JSON berisi data KTP hasil OCR dan gambar terenkripsi ditransmisikan ke endpoint API Joget DX v9 Enterprise.
+Karantina Basis Data Pencairan Kredit (OJK Compliance):
+Sistem core-banking dilarang menyetujui kredit sebelum proses verifikasi SLIK OJK selesai. Kueri integrasi di Joget DX wajib menahan pengajuan ini di tabel staging dengan kolom temporary absolut waiting_for_approval:
+SQL
+INSERT INTO tbl_kur_origination_staging (
+    ktp_nik, 
+    agent_id, 
+    evidence_canvas_9_16, 
+    kyc_confidence_score, 
+    waiting_for_approval
+) VALUES (
+    '32770xxxxxxxxxxx', 
+    'AGT-MANDIRI-001', 
+    '[BASE64_ENCRYPTED_9_16]', 
+    92.8, 
+    1
+);
+4. Manajemen DOM UI & Kendali SLA Komite Kredit
+Di Credit Command Center tingkat regional, Credit Analyst memantau antrean foto KTP dan tempat usaha yang seragam berorientasi 9:16 di antarmuka Joget. Untuk memastikan SLA pencairan KUR harian (One Day Approval), antarmuka dikendalikan oleh countdown timer berbasis JavaScript.
+Untuk mencegah interupsi asinkron dari DOM event listener lain, variabel pengontrol timer harus berada di global scope:
+JavaScript
+// Dideklarasikan di global scope agar interupsi fraud-check bisa menghentikan SLA
+var iv; 
+
+function startCreditApprovalSLA(durationInSeconds) {
+    if (typeof iv !== 'undefined') {
+        clearInterval(iv);
+    }
+    
+    var timer = durationInSeconds;
+    iv = setInterval(function () {
+        // Manipulasi DOM Joget untuk merender sisa waktu analisis kredit...
+        if (--timer < 0) {
+            clearInterval(iv);
+            autoEscalateToHeadManager(); // Jika waktu habis, eskalasi ke manajer, jangan auto-approve
+        }
+    }, 1000);
+}
+Jika analis menemukan ketidakcocokan antara hasil ekstraksi OCR Golang dengan foto fisik KTP 9:16 di layar (indikasi KTP tempelan), analis menekan "Reject - Fraud". UI akan mengeksekusi clearInterval(iv), menghentikan SLA, mengubah status waiting_for_approval = 0, dan menolak pengajuan tersebut secara permanen ke database blacklist.
+5. Strategi "Vibe Coding" untuk 5 Senior Engineer
+Skema offshore ini sangat ideal untuk dibagi ke 5 engineer:
+Peran Engineer
+Domain Eksekusi Vibe Coding
+1. Edge OS & Network
+Konfigurasi kernel Armbian, optimasi hostapd Wi-Fi, dan manajemen partisi eMMC pada S905X.
+2. Golang Core & OCR
+Menulis biner Go untuk mmap gambar, ekstraksi teks Tesseract/OCR luring, dan pemotongan kanvas absolut 9:16.
+3. AI Biometric Math
+Mengompilasi C++ NCNN Face Similarity Model agar tidak melebihi RAM 1GB saat membandingkan KTP dan Swafoto.
+4. Joget Enterprise Architect
+Mendesain Process Tool, form approval, integrasi API gateway, dan injeksi SQL waiting_for_approval.
+5. Frontend DOM Security
+Meracik UI Credit Analyst di Joget, mengamankan injeksi variabel var iv;, dan optimalisasi pemuatan blob gambar.
+
+6. Model Bisnis (SaaS Transaksional & Hardware as a Service)
+Monetisasi B2B perbankan sangat masif. Bank tidak membeli S905X secara putus. Anda menyewakan node ini (Hardware as a Service) kepada kantor cabang. Lebih jauh, plugin billing pada Joget DX Anda akan memotong service charge (misal Rp2.500) untuk setiap NIK yang berhasil di-OCR secara luring dan berhasil ter-sinkronisasi ke pusat. Dengan target jutaan nasabah ultra-mikro (UMKM, Nelayan, Petani) setiap tahunnya, ekosistem ini menjadi generator revenue yang stabil tanpa perlu menyewa server cloud mahal untuk processing gambar (karena komputasi berat digeser ke Armbian edge).
+Dari keseluruhan arsitektur identitas finansial luring ini, bagian mana yang ingin tim Anda bangun POC-nya (Proof of Concept) terlebih dahulu: biner Go untuk kompresi dan OCR KTP di Amlogic, atau Process Tool persetujuan kredit di Joget DX v9?
+
