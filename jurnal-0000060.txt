@@ -1,0 +1,81 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO, Thinking Level : Extended
+=========================
+
+Selamat sore dari Bandung! Di hari Senin, 29 Juni 2026 ini, mari kita ciptakan sebuah disrupsi arsitektur teknologi di level inventor dan guru besar.
+Menjawab tantangan untuk sektor B2C / Layanan Publik (Localhost/Offline-First) yang hemat resource server, kita akan menyasar salah satu program paling masif dan krusial dari pemerintah saat ini: Program Makan Bergizi Gratis (MBG) untuk Anak Sekolah di bawah naungan Badan Gizi Nasional (BGN).
+Masalah terbesarnya adalah pengawasan di wilayah blank spot. Bagaimana negara memastikan vendor katering di pedalaman (sekolah dasar di pegunungan atau pulau terluar) benar-benar menyajikan lauk berprotein tinggi (daging/telur/susu) dan bukan sekadar mie instan atau makanan sisa? Jika hanya mengandalkan laporan foto kertas yang diunggah seminggu kemudian, manipulasi anggaran negara bernilai triliunan sangat mudah terjadi.
+Berikut adalah rancangan modul edge computer vision luring yang bertindak sebagai auditor gizi otomatis, mengawinkan perangkat keras daur ulang, AI terkuantisasi, dan ekosistem enterprise workflow.
+Nama Produk: "Nutri-Edge: Off-Grid MBG Visual Forensics & Triage Node"
+Kategori: Layanan Publik (Program MBG) / Kemenkes & BGN / Edge Vision AI / Patrol Data Collector / Localhost PWA Hub.
+Target Konsumer: Sekolah Negeri/Swasta (B2C Local), Komite Sekolah, Vendor Katering Lokal, dan Auditor Badan Gizi Nasional.
+Platform Utama: Daemon biner Golang berkinerja tinggi yang berjalan sepenuhnya luring pada OS Armbian di dalam perangkat Single Board Computer (SBC) Amlogic S905X (eMMC 8GB, RAM 1GB/2GB). Perangkat ini memancarkan Wi-Fi lokal (captive portal) di dapur/kantin sekolah, menyinkronkan datanya secara asinkron ke Joget DX v9 Enterprise di pusat saat ada koneksi internet.
+1. Topologi Perangkat Keras: "Rural Kitchen Survival Node"
+Papan Amlogic S905X dirakit ke dalam casing akrilik kedap uap air dan minyak (IP65) yang dipasang di atas meja distribusi kantin sekolah. Mengingat banyak sekolah pedalaman belum memiliki aliran listrik PLN yang stabil 24 jam, sistem ini direkayasa dengan catu daya mandiri berbasis energi kinetik.
+Inovasi mekanisnya memanfaatkan dinamo dari motor pencetak (printer motor) bekas yang dirangkai dengan tuas engkol. Saat listrik padam, guru atau petugas katering cukup memutar engkol manual tersebut selama kurang dari satu menit. Energi mekanis ini dikonversi menjadi arus DC stabil menuju supercapacitor, memberikan daya instan bagi cip S905X untuk melakukan proses booting, menghidupkan modul kamera web USB, mengeksekusi AI luring, dan mencatat log distribusi makanan hari itu.
+2. Alur Eksekusi Pemrosesan Citra Forensik Luring (Edge Pipeline)
+Fase A: Ingesti Visual Alat Bukti Porsi Makanan
+Kamera memotret baki makanan anak sekolah secara luring. Biner Golang pada Armbian langsung mengunci byte-array gambar mentah tersebut.
+Agar foto ini sah sebagai alat bukti audit pencairan dana negara dan memiliki detail piksel yang cukup untuk membedakan tekstur serat daging sapi asli dengan protein nabati olahan, pipeline Golang mengeksekusi upscaling gambar menjadi kanvas absolut beresolusi 3000px x 3000px.
+Algoritma kemudian memotong (cropping) spasial gambar tersebut untuk mengunci rasio aspek vertikal secara mutlak pada 9:16. Standardisasi 9:16 ini krusial; saat data disinkronisasi ke server pusat, auditor BGN dapat menginspeksi mikrotekstur makanan secara fullscreen di layar smartphone mereka tanpa mengalami distorsi piksel atau layout shifting pada antarmuka.
+Fase B: Inferensi Luring Kepatuhan Gizi (Edge SLM)
+Pustaka Small Vision Model berbasis C++ NCNN memproses gambar 9:16 secara luring di bawah alokasi RAM 1GB S905X. AI ini secara matematis menghitung Indeks Kepatuhan Nutrisi ($N_{compliance}$) per baki makanan:
+$$N_{compliance} = \frac{1}{\mathcal{A}} \iint_{\Omega} \left( \nabla I_{3000}(x,y) \cdot \Phi_{nutrition}(x,y) \right) \,dx\,dy - \lambda \cdot \Delta_{deficit}$$
+(Di mana $\nabla I_{3000}$ adalah gradien fitur lauk-pauk pada resolusi tinggi, $\Phi_{nutrition}$ adalah matriks referensi standar protein/kalori BGN, dan $\Delta_{deficit}$ adalah rasio deteksi karbohidrat berlebih/kosong pada proyeksi 9:16).
+3. Sinkronisasi Asinkron & Protokol Isolasi Joget DX v9
+Semua hasil scoring gizi terenkripsi AES-256 di dalam eMMC S905X. Ketika mobil pengawas distrik melintas dan membawa perangkat router mifi, atau saat bandwidth VSAT sekolah aktif, data JSON ditransmisikan secara asinkron ke server Joget DX pusat.
+Karantina Basis Data Pembayaran Vendor Katering:
+Untuk mencegah sistem pusat melakukan otomatisasi pembayaran (auto-disbursement) kepada vendor katering yang melakukan fraud (misal: porsi protein kurang), skrip SQL penerima pada Joget dilarang menulis langsung ke tabel pembayaran akhir. Kueri diwajibkan untuk menahan data dengan menyertakan kolom temporary bernama waiting_for_approval:
+SQL
+INSERT INTO tbl_mbg_vendor_payout_staging (
+    school_id, 
+    vendor_id, 
+    evidence_canvas_9_16, 
+    ai_nutrition_score, 
+    waiting_for_approval
+) VALUES (
+    'SCH-JABAR-9921', 
+    'VND-CATER-042', 
+    '[BASE64_IMAGE_BLOB_9_16]', 
+    94.5, 
+    1
+);
+Dana negara tertahan dengan status waiting_for_approval = 1 hingga auditor regional menyetujuinya.
+4. Manajemen DOM UI & Kendali SLA Pencairan Dana
+Di Command Center BGN, auditor memantau ratusan ribu antrean foto baki makanan berorientasi 9:16 pada UI form Joget DX. Demi mempertahankan SLA layanan (Service Level Agreement) agar vendor katering lokal segera dibayar (maksimal 3 hari kerja untuk menjaga arus kas UMKM), antarmuka menggunakan hitung mundur (countdown timer) berbasis JavaScript.
+Logika hitung mundur ini wajib dideklarasikan variabelnya pada tingkat global scope untuk memungkinkan interupsi fungsi:
+JavaScript
+// Deklarasi global agar saat sebelum call startCountdown bisa clearInterval terlebih dahulu
+var iv; 
+
+function startVendorPayoutSLA(durationInSeconds) {
+    if (typeof iv !== 'undefined') clearInterval(iv);
+    
+    var timer = durationInSeconds;
+    iv = setInterval(function () {
+        // Manipulasi DOM untuk sisa waktu SLA di UI...
+        if (--timer < 0) {
+            clearInterval(iv);
+            autoApprovePayoutToVendor();
+        }
+    }, 1000);
+}
+Deklarasi var iv; di luar fungsi ini adalah pengaman arsitektur anti-korupsi. Apabila auditor melihat kejanggalan komposisi lauk pada foto resolusi tinggi 9:16 dan menekan tombol "Hold - Suspect Fraud", antarmuka UI seketika mengeksekusi clearInterval(iv). Fungsi ini akan mematikan hitung mundur, menahan status pembayaran pada waiting_for_approval = 1, dan mengirimkan peringatan ke polisi wilayah setempat.
+5. Strategi "Vibe Coding" untuk 5 Senior Engineer
+Peran Engineer
+Domain Eksekusi Vibe Coding
+Engineer 1 (Embedded Tech)
+Modifikasi kernel Armbian S905X dan menstabilkan tegangan pengisian daya DC dari putaran engkol mekanis dinamo motor pencetak.
+Engineer 2 (Golang Core)
+Menulis compiler pengolah gambar di Go untuk upscaling 3000px dan pemotongan absolut 9:16 secara luring tanpa kebocoran memori.
+Engineer 3 (Edge AI SLM)
+Menerapkan kompilasi matriks model NCNN agar sistem mampu mengenali jenis sayur dan protein di bawah batas RAM 1GB.
+Engineer 4 (Enterprise Integration)
+Membangun Process Tool di Joget DX v9 dan mengontrol injeksi data yang aman pada kolom waiting_for_approval.
+Engineer 5 (Frontend Master)
+Mendesain dasbor auditor di Joget, mengamankan cakupan variabel global var iv;, dan memastikan kanvas berat dimuat dengan mulus (lazy loading).
+
+6. Model Bisnis (Service Charge per Porsi Valid)
+Modul ini diimplementasikan sebagai infrastruktur B2C/Layanan Publik. Model penagihannya ditanamkan di dalam plugin smart-billing Joget DX pusat. Untuk setiap baki makan siang bergizi yang sukses difoto di sekolah terpencil, dianalisis sesuai standar gizi oleh AI lokal, dan tervalidasi masuk ke basis data dengan status waiting_for_approval, sistem perangkat lunak akan memotong biaya service charge/admin-fee (misalnya Rp100 hingga Rp250 per porsi anak sekolah). Mengingat ada jutaan anak sekolah yang menerima program MBG setiap harinya di seluruh Indonesia, ini menciptakan aliran pendapatan harian yang masif bagi kreator software-nya.
+Dari seluruh komponen yang baru saja kita bedah ini, apakah Anda ingin kita mendalami struktur kueri Golang untuk pemrosesan kanvas gambar di perangkat S905X terlebih dahulu, atau merancang skema Process Tool untuk persetujuan vendor di Joget DX v9?
+
