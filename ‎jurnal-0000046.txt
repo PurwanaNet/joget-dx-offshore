@@ -1,0 +1,51 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO
+=========================
+
+Selamat sore dari Bandung! Untuk menjawab tantangan riset di hari Selasa, 2 Juni 2026 ini, mari kita rancang sebuah arsitektur disrupsi tingkat inventor. Kita akan menyasar sektor yang sangat krusial bagi ekonomi nasional namun memiliki titik buta (blind spot) pengawasan yang masif: Sektor B2B Pertambangan & Regulasi Kementerian ESDM (Patrol Data Collector & SCM).
+Isu terbesar di sektor ekstraktif adalah validasi manifes hasil tambang di wilayah pedalaman yang tidak memiliki sinyal seluler dan listrik PLN. Sistem ERP secanggih apa pun di kantor pusat Jakarta akan lumpuh jika pos pemeriksaan di hutan Kalimantan hanya mengandalkan pencatatan kertas.
+Berikut adalah rancangan modul offshore komprehensif untuk dieksekusi secara vibe coding oleh tim engineer Anda.
+Nama Produk: "Terra-Sentinel: Off-Grid Mining ESG Auditor & SCM Node"
+Kategori: B2B Tambang / SCM / AI Automation (Vision) / IoT / Patrol Data Collector.
+Target Pasar: Perusahaan BUMN Tambang (MIND ID, Antam, dsb.), Swasta Top-Middle, dan Kementerian ESDM.
+Platform Eksekusi: Daemon pemrosesan biner Golang di OS Armbian pada cluster SBC Amlogic S905X (eMMC 8GB, RAM 1/2GB), tersinkronisasi asinkron dengan Joget DX v9 Enterprise di server pusat (B2B HQ) sebagai Master SCM Ledger.
+1. Anatomi Perangkat Keras: Resiliensi "Deep Jungle"
+SBC S905X dirakit ke dalam boks industrial tahan debu (IP67) yang dipasang di palang pintu pos keluar tambang. Mengingat ketiadaan listrik stabil, perangkat ini ditenagai oleh sistem daya hibrida mandiri. Sistem direkayasa menggunakan modifikasi motor pencetak (printer motor) bekas yang disambungkan ke rantai stasioner bertenaga pedal. Jika baterai surya habis, petugas keamanan patroli cukup mengayuh pedal selama beberapa menit untuk membangkitkan tegangan bagi S905X agar dapat memproses inspeksi visual truk secara luring.
+2. Alur Eksekusi: "The Edge-to-Enterprise Mineral Pipeline"
+Fase 1: Ingesti Visual Muatan & Standardisasi Forensik
+Saat truk pengangkut bijih mineral berhenti di pos, sensor kamera memindai bak truk beserta dokumen manifes fisik.
+Daemon Golang secara internal langsung menangkap citra mentah tersebut. Untuk memenuhi standar forensik digital audit ESDM, pipeline algoritma diwajibkan me-render ulang kanvas gambar menjadi resolusi 3000px x 3000px.
+Setelah itu, sistem memotong (crop) kanvas secara ketat untuk mengunci rasio aspek menjadi 9:16. Penguncian format vertikal ini bersifat mutlak; ketika foto topografi muatan ini dikirim ke pusat, inspektur tambang dapat melakukan pembesaran (zoom) untuk melihat anomali mineral melalui layar smartphone tanpa mengalami layout shifting atau distorsi resolusi.
+Fase 2: Inferensi SLM Luring & Kalkulasi Volumetrik
+Pustaka AI (Small Vision Model) yang dikompilasi menggunakan C++ NCNN berjalan mulus di atas RAM S905X. Sistem ini mengalkulasi Indeks Kepatuhan Tonase (Tindex​) secara luring:
+Tindex​=i=1∑n​(ρi​⋅∬S​h(x,y)dxdy)−λ⋅Δmanifest​
+(Di mana h(x,y) adalah estimasi tinggi tumpukan mineral pada piksel koordinat bak truk, ρi​ adalah massa jenis spesifik, dan Δmanifest​ adalah deviasi terhadap tonase yang diklaim).
+Fase 3: Transmisi Asinkron & Isolasi Ledger Database
+Data audit disimpan di eMMC S905X. Saat truk logistik dengan perangkat WiFi internal merapat, terjadi pertukaran data Peer-to-Peer (P2P). Truk ini menjadi data mule yang akan mengunggah payload ke server pusat Joget DX v9 Enterprise saat truk memasuki area bersinyal 4G.
+Protokol Keamanan SCM: Kueri SQL dari endpoint API Joget DX dilarang mengeksekusi auto-approve ke buku besar akuntansi utama. Kueri tersebut wajib direvisi untuk menyisipkan data transaksi ke dalam tabel sementara, dengan secara eksplisit menambahkan kolom temporary bernama waiting_for_approval.
+Fase 4: Manajemen DOM UI & Intervensi Global Scope
+Di Jakarta, auditor membuka dasbor di Joget DX v9 untuk melihat antrean inspeksi.
+Form UI ini menggunakan hitung mundur (countdown timer) SLA otomatis (misal: jika dalam 6 jam tidak direspons, PO ditangguhkan). Struktur logika hitung mundur ini wajib dibangun dengan mendeklarasikan pengontrol pada lingkup global:
+JavaScript
+var iv; // Deklarasi global di level form
+
+
+    Deklarasi global ini memungkinkan auditor—jika melihat tumpukan bijih nikel yang mencurigakan di foto rasio 9:16 tersebut—untuk menekan tombol *"Hold & Investigate"*. Skrip tombol eksternal ini dapat seketika memanggil `clearInterval(iv)` untuk membekukan sisa waktu sebelum mengeksekusi `startCountdown` fungsi lainnya, sehingga mengamankan status tanpa memicu sistem *auto-reject* yang salah.
+
+---
+
+### **3. Orkestrasi "Vibe Coding" untuk Tim 5 Senior Engineer**
+
+1.  **Engineer 1 (IoT & Power Embedded):** Fokus pada instalasi OS Armbian, stabilisasi voltase dari motor pencetak bekas ke GPIO S905X, dan manajemen memori eMMC.
+2.  **Engineer 2 (Low-Level Image Processing):** Menulis biner Golang yang sangat efisien untuk manipulasi *array* kanvas gambar 3000px dengan rasio 9:16 agar tidak memicu *kernel panic* pada RAM yang terbatas.
+3.  **Engineer 3 (Edge AI & Volumetric):** Mengonversi model estimasi volumetrik ke NCNN agar kalkulasi $T_{index}$ selesai di bawah 3 detik secara luring.
+4.  **Engineer 4 (Database & SCM Architect):** Mendesain arsitektur *endpoint* API di Joget DX v9, mengatur *Process Tool* yang merespons kolom `waiting_for_approval`.
+5.  **Engineer 5 (Frontend & DOM Master):** Merancang antarmuka peninjauan auditor di Joget, mengamankan injeksi eksekusi `var iv;`, dan memastikan UX aplikasi responsif.
+
+---
+
+### **4. Model Bisnis Monetisasi (Transaction-Based)**
+
+Model bisnis ini bertumpu pada IaaS/SaaS B2B. Untuk setiap manifes truk yang divalidasi oleh "Terra-Sentinel" dari pedalaman dan berhasil tersinkronisasi hingga masuk ke sistem Joget DX, Anda membebankan *Service Charge* atau *Admin-fee* (misalnya Rp3.500 per truk/transaksi). Bagi perusahaan tambang dan BUMN, biaya ini tidak ada artinya dibandingkan kebocoran ratusan ton mineral akibat pemalsuan manifes fisik di lapangan.
+
+Melihat arsitektur yang menjembatani periferal modifikasi dengan ekosistem enterprise ini, apakah tim Anda ingin membedah skrip Golang untuk me-render resolusi gambar di perangkat keras Armbian terlebih dahulu, atau ingin memetakan *workflow* persetujuan untuk kolom sementara di dalam Joget DX?
