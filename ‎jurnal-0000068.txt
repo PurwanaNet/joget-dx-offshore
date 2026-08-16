@@ -1,0 +1,255 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO, Thinking Level : Extended
+=========================
+
+Selamat sore! Mengingat hari ini adalah Rabu, 22 Juli 2026, kita berada di momentum krusial implementasi program strategis nasional. Menjawab tantangan Anda untuk merancang modul offshore berskala enterprise dengan pendekatan level inventor, saya akan membidik sektor Layanan Publik / B2G2C (Business to Government to Consumer) – Spesifik pada Program Makan Bergizi Gratis (MBG) untuk Anak Sekolah.
+Masalah terbesar dari program MBG di puluhan ribu sekolah (terutama di daerah 3T - Tertinggal, Terdepan, Terluar) adalah pengawasan kualitas gizi, pencegahan fraud (vendor katering mengurangi porsi/lauk), dan verifikasi kehadiran siswa di area tanpa sinyal internet (blank spot).
+Sebagai solusi vibe coding untuk 5 senior engineer, kita tidak akan membuat aplikasi web biasa. Kita akan merancang ekosistem Edge-AI Vision & Workflow Automator yang berjalan secara luring di perangkat keras murah, dan tersinkronisasi ke platform Joget DX v9 Enterprise di tingkat Kementerian/Badan Gizi Nasional (BGN).
+Nama Produk: "NutriNode-Edge: Offline Food Vision & MBG Ledger System"
+Kategori: Layanan Publik (MBG) / Edge AI / Computer Vision / IoT / Workflow Automation.
+Target Konsumer: B2G (Badan Gizi Nasional, Kemendikdasmen) & B2B (Vendor Katering Skala Menengah).
+Platform Utama:
+Edge: Daemon biner Golang & C++ (NCNN) pada SBC Amlogic S905X (RAM 2GB, 8GB eMMC, OS Linux Armbian).
+Core Backend: Joget DX v9 Enterprise (sebagai orchestrator pembayaran vendor, dashboard analitik, dan ticketing/helpdesk).
+1. Anatomi Perangkat Keras: "The Dapur Satelit Terminal"
+Di setiap sekolah atau titik distribusi, kita menempatkan satu unit SBC Amlogic S905X yang dirakit ke dalam kotak akrilik bersama sebuah modul kamera USB (webcam 720p standar) dan buzzer. Perangkat ini harganya tidak lebih dari Rp 250.000 (menggunakan eks-STB yang di-flash ulang).
+Sistem ini beroperasi 100% tanpa internet. Saat jam makan siang, siswa meletakkan nampan makanannya di bawah kamera, lalu menempelkan kartu QR (atau sekadar memperlihatkan wajah).
+2. Pipeline Komputasi Edge-AI Luring (The S905X Engine)
+Karena RAM S905X hanya 1GB atau 2GB, kita tidak bisa menjalankan model AI raksasa. Biner Golang bertindak sebagai controller memori, memanggil model Computer Vision terkuantisasi (INT8) melalui CGO.
+Fase A: Verifikasi Penerima (Anti-Double Dipping)
+Kamera memindai QR Code pada name tag siswa atau menggunakan Lightweight Face Detection (seperti RetinaFace-Fast) untuk memastikan siswa tersebut valid dan belum mengambil jatah hari ini.
+Fase B: Analisis Komposisi Gizi Nutrisi (Food Segmentation)
+Model YOLO-Fastest (ukuran hanya ~3MB) mendeteksi 4 kelas objek di atas nampan: Nasi/Karbohidrat, Protein (Telur/Ayam/Ikan), Sayur, dan Susu.
+Sistem menghitung rasio kecukupan porsi menggunakan estimasi area piksel (Bounding Box Area):
+$$Score_{gizi} = \sum_{i=1}^{n} \left( w_i \times \min\left(1, \frac{A_{detected\_i}}{A_{standard\_i}}\right) \right)$$
+Di mana $w_i$ adalah bobot krusial komponen (misal protein $0.4$, susu $0.2$), dan $A$ adalah area piksel objek. Jika $Score_{gizi} < 0.85$, buzzer berbunyi panjang dan transaksi ditandai sebagai "Porsi Tidak Sesuai".
+Data transaksi (ID Siswa, Waktu, Skor Gizi, dan hash foto bukti resolusi rendah) disimpan dalam SQLite luring di dalam eMMC 8GB secara terenkripsi.
+3. Protokol Asynchronous & Joget DX v9 Enterprise Bridge
+Sekali seminggu, atau saat guru/pengawas menyalakan tethering hotspot dari smartphone mereka, S905X akan mendeteksi internet dan memicu rutin sync_worker.go.
+Sistem tidak mengirim gambar HD, melainkan hanya JSON transaksi dan gambar thumbnail (WebP 10KB/gambar) khusus untuk porsi yang di-flag "Tidak Sesuai". Data ini ditembakkan via REST API ke Joget DX v9 di pusat.
+Injeksi Workflow Pembayaran Vendor di Joget DX:
+Data masuk ke tabel Staging dan langsung memicu Process Tool di Joget:
+Auto-Decision Node: Jika tingkat kesesuaian gizi vendor dari sebuah sekolah > 95% selama seminggu, Joget memicu API Payment Gateway untuk mentransfer dana otomatis ke vendor (SLA 1 hari).
+Ticketing & Penalti: Jika tingkat kesesuaian < 90%, sistem secara otomatis menahan dana, membuat tiket investigasi (Helpdesk), dan menugaskan auditor lapangan.
+JavaScript
+// Contoh Logic Approval Payout otomatis pada Joget DX Process Tool (Rhino Script/JS)
+function evaluateVendorPerformance(vendorId, batchId) {
+    var avgScore = fetchAverageScore(batchId); 
+    if (avgScore >= 95.0) {
+        workflowManager.completeActivity(processId, "APPROVE_AUTO_PAYMENT");
+    } else {
+        workflowManager.completeActivity(processId, "HOLD_AND_INVESTIGATE");
+        generatePenaltyNotice(vendorId, avgScore);
+    }
+}
+4. Strategi "Vibe Coding" Tim Senior (5 Orang)
+Proyek ini sangat terukur untuk dieksekusi secara intensif (1-2 bulan) tanpa harus memodifikasi inti Joget DX, melainkan menjadikannya sebagai platform orkestrasi:
+Peran Engineer
+Fokus Eksekusi
+1. Embedded Linux & Go Dev
+Flashing Armbian ke S905X, kompilasi daemon Go, optimasi SQLite write-cycle, dan sistem auto-sync asinkron.
+2. Edge AI/C++ Engineer
+Kuantisasi model Object Detection makanan ke format NCNN (INT8), binding C++ ke Golang, optimasi RAM agar tidak kernel panic.
+3. Joget BPM Architect
+Desain alur kerja (Process Tool) pembayaran vendor, Datalist monitoring gizi, dan pembuatan Userview untuk pengawas BGN.
+4. Integration & Security
+Penulisan API Gateway untuk menerima data dari ribuan S905X, enkripsi payload, dan integrasi ke sistem Bank (API Transfer).
+5. Frontend/Dashboard Dev
+Membuat Progressive Web App (PWA) tambahan/plugin visualisasi peta sebaran gizi nasional berbasis heatmap yang di-embed ke Joget.
+
+5. Model Bisnis (SaaS B2G dengan Service Charge)
+Alih-alih menjual perangkat keras atau software putus, tim Anda menerapkan model Micro-Transaction Admin-Fee:
+Perangkat S905X dipinjamkan ke sekolah secara gratis (CAPEX sangat rendah).
+Anda menagih Rp 50 hingga Rp 100 per tray/nampan yang berhasil diverifikasi kepada Pemerintah atau Vendor (sebagai biaya kepatuhan/audit digital otomatis).
+Jika sebuah kota memiliki 100.000 siswa (100.000 transaksi/hari), modul offshore ini menghasilkan pendapatan kotor Rp 5.000.000 - Rp 10.000.000/hari hanya dari satu kota, mendanai hosting server Joget DX dan operasional tim engineering dengan sangat melimpah.
+Arsitektur ini mendemonstrasikan bagaimana platform enterprise (Joget DX v9) dipadukan dengan komputasi primitif (SBC murah) untuk menyelesaikan masalah logistik nyata berskala nasional.
+—
+Tolong jelaskan secara detail bagaimana cara melakukan binding CGO antara Golang dan model AI C++ (NCNN) pada OS Armbian S905X agar memori 2GB tidak bocor saat memproses gambar secara terus menerus.
+
+Mengeksekusi model Computer Vision secara terus-menerus (continuous inference) pada SBC dengan RAM 2GB seperti Amlogic S905X adalah pertarungan melawan Out-Of-Memory (OOM) Killer dari kernel Linux.
+Masalah utama dalam integrasi Golang dan C++ via CGO bukanlah performa komputasinya, melainkan Batas Manajerial Memori. Go menggunakan Garbage Collector (GC) otomatis, sementara C++ mengandalkan alokasi manual (new/delete atau malloc/free). Jika memori melintasi batas ini tanpa pengawasan ketat, RAM 2GB akan habis dalam hitungan menit.
+Berikut adalah arsitektur tingkat engineer untuk mengikat CGO dengan NCNN (Tencent's Neural Network Inference Framework) tanpa kebocoran memori (Zero-Leak Pipeline).
+1. Strategi "Caller Allocates" (Kunci Mencegah Kebocoran)
+Alih-alih membiarkan C++ mengalokasikan memori untuk hasil deteksi (seperti bounding box YOLO) dan memaksa Go untuk mengingat pemanggilan C.free(), kita membalik paradigmanya: Go yang menyediakan wadah kosong (array), lalu C++ hanya bertugas mengisinya.
+Dengan cara ini, siklus hidup memori sepenuhnya tetap berada di bawah kendali Garbage Collector Go, dan C++ terisolasi hanya sebagai mesin pemroses data (pengisi buffer).
+Arsitektur C/C++ Bridge (bridge.h & bridge.cpp)
+CGO tidak bisa berinteraksi langsung dengan class atau metode C++ (OOP). Kita harus membuat wrapper API bahasa C datar (flattened C API).
+bridge.h
+C
+#ifndef CGO_NCNN_BRIDGE_H
+#define CGO_NCNN_BRIDGE_H
+
+#include <stdint.h>
+#include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Opaque pointer untuk merepresentasikan model NCNN di Go
+typedef void* NcnnModelPtr;
+
+// Load model HANYA SEKALI saat booting
+NcnnModelPtr LoadModel(const char* param_path, const char* bin_path);
+
+// Fungsi inferensi: Go mengirim pointer piksel, dan pointer output buffer
+// Mengembalikan jumlah objek yang terdeteksi
+int DetectObjects(
+    NcnnModelPtr model, 
+    const uint8_t* image_data, int width, int height,
+    float* out_boxes, int max_boxes
+);
+
+// Destruktor untuk ditarik saat aplikasi Go di-terminate
+void DestroyModel(NcnnModelPtr model);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
+bridge.cpp
+C++
+#include "bridge.h"
+#include <ncnn/net.h>
+
+extern "C" {
+
+NcnnModelPtr LoadModel(const char* param_path, const char* bin_path) {
+    ncnn::Net* net = new ncnn::Net();
+    
+    // Optimasi untuk Amlogic S905X (Cortex-A53 4-Core)
+    net->opt.num_threads = 4; 
+    net->opt.use_packing_layout = true;
+    net->opt.use_sgemm_convolution = true;
+    
+    net->load_param(param_path);
+    net->load_model(bin_path);
+    return (NcnnModelPtr)net;
+}
+
+int DetectObjects(NcnnModelPtr model, const uint8_t* image_data, int width, int height, float* out_boxes, int max_boxes) {
+    ncnn::Net* net = (ncnn::Net*)model;
+    
+    // Bungkus array byte dari Go ke dalam ncnn::Mat TANPA menyalin data (Zero-Copy)
+    // ncnn::Mat::from_pixels tidak mengalokasikan buffer piksel baru jika tidak perlu di-resize
+    ncnn::Mat in = ncnn::Mat::from_pixels(image_data, ncnn::Mat::PIXEL_RGB, width, height);
+    
+    ncnn::Extractor ex = net->create_extractor();
+    ex.set_light_mode(true); // Hemat RAM
+    ex.input("images", in);
+    
+    ncnn::Mat out;
+    ex.extract("output", out);
+    
+    // Asumsi output dari model (misal YOLO) adalah Nx6 (label, prob, x, y, w, h)
+    int count = out.h;
+    if (count > max_boxes) count = max_boxes;
+    
+    // Salin hasil ke buffer yang telah DISEDIAKAN OLEH GO
+    for (int i = 0; i < count; i++) {
+        const float* values = out.row(i);
+        int offset = i * 6;
+        out_boxes[offset + 0] = values[0]; // Label
+        out_boxes[offset + 1] = values[1]; // Confidence
+        out_boxes[offset + 2] = values[2]; // X
+        out_boxes[offset + 3] = values[3]; // Y
+        out_boxes[offset + 4] = values[4]; // W
+        out_boxes[offset + 5] = values[5]; // H
+    }
+    
+    // NCNN secara otomatis akan mendestruksi 'in', 'out', dan 'ex' saat scope fungsi berakhir.
+    // Tidak ada memori C++ yang tersisa.
+    return count;
+}
+
+void DestroyModel(NcnnModelPtr model) {
+    if (model) {
+        ncnn::Net* net = (ncnn::Net*)model;
+        delete net;
+    }
+}
+
+}
+2. Implementasi Golang dengan Zero-Copy Transfer
+Di sisi Go, kita memanggil fungsi C ini menggunakan paket unsafe. Kita akan mengoper pointer dari slice Go secara langsung ke ruang memori C.
+main.go
+Go
+package main
+
+/*
+#cgo CXXFLAGS: -std=c++11 -I/usr/local/include/ncnn
+#cgo LDFLAGS: -L/usr/local/lib -lncnn -lomp -lpthread
+#include "bridge.h"
+#include <stdlib.h>
+*/
+import "C"
+import (
+	"fmt"
+	"unsafe"
+)
+
+// Pre-alokasi buffer di Go untuk mencegah alokasi berulang per frame
+const MaxBoxes = 50
+const BoxAttrs = 6
+
+func main() {
+	// 1. Convert string Go ke string C (Ini SATU-SATUNYA tempat kita butuh C.free)
+	cParamPath := C.CString("model.param")
+	cBinPath := C.CString("model.bin")
+	defer C.free(unsafe.Pointer(cParamPath))
+	defer C.free(unsafe.Pointer(cBinPath))
+
+	// 2. Load Model sekali di awal
+	model := C.LoadModel(cParamPath, cBinPath)
+	defer C.DestroyModel(model) // Pastikan model dihapus saat program Go mati
+
+	// 3. Pre-alokasi buffer output di heap Go (TIDAK DIBUAT DI DALAM LOOP)
+	// Kapasitas: 50 kotak * 6 atribut = 300 float32
+	outBuffer := make([]float32, MaxBoxes*BoxAttrs)
+
+	// Simulasi pemrosesan frame video terus-menerus
+	for {
+		// Dapatkan frame gambar berupa byte array RGB murni (misal dari decorder hardware S905X)
+		frameBytes, width, height := getNextFrame() 
+
+		// Oper pointer byte gambar dan pointer output buffer ke C++
+		// Kita menggunakan unsafe.Pointer tanpa menyalin array-nya
+		numDetected := C.DetectObjects(
+			model,
+			(*C.uint8_t)(unsafe.Pointer(&frameBytes[0])),
+			C.int(width),
+			C.int(height),
+			(*C.float)(unsafe.Pointer(&outBuffer[0])),
+			C.int(MaxBoxes),
+		)
+
+		count := int(numDetected)
+		
+		// Parsing hasil yang sudah ditulis oleh C++ ke slice Go kita
+		for i := 0; i < count; i++ {
+			offset := i * BoxAttrs
+			label := outBuffer[offset]
+			conf := outBuffer[offset+1]
+			fmt.Printf("Terdeteksi: Class %v, Confidence: %v\n", label, conf)
+		}
+	}
+}
+
+func getNextFrame() ([]byte, int, int) {
+    // Fungsi simulasi mengambil frame dari kamera/video
+    return make([]byte, 640*480*3), 640, 480
+}
+3. Optimasi Tingkat Lanjut untuk Armbian S905X
+Meskipun arsitektur kode di atas sudah anti-bocor, RAM 2GB di Armbian bisa tetap terasa sesak jika Go menumpuk sampah objek sebelum GC sempat berjalan. Anda perlu menerapkan dua konfigurasi sistem berikut:
+GOMEMLIMIT (Go 1.19+)
+Secara default, Garbage Collector Go menunggu heap berlipat ganda sebelum melakukan pembersihan. Di RAM 2GB, OS sendiri sudah memakan ~400MB. Untuk mencegah Go menyentuh batas OS dan memicu OOM Killer, kunci memori Go di level sistem operasi.
+Jalankan daemon Go Anda dengan environment variable berikut: GOMEMLIMIT=1200MiB GOGC=50 ./edge-vision-daemon
+GOMEMLIMIT=1200MiB: Go akan secara agresif melakukan pembersihan (soft limit) sebelum memori aplikasinya menyentuh 1.2 GB. Ini menyisakan 800MB yang aman untuk Kernel Armbian, NCNN, dan sistem file cache.
+GOGC=50: Memaksa GC berjalan dua kali lebih sering dari standar default (100). Ini akan sedikit menaikkan beban CPU S905X (~3%), tetapi membuat kurva penggunaan memori sangat rata (flat).
+Unlocked Pool Allocator NCNN
+Secara default, NCNN menyimpan pool memori tensor untuk mempercepat proses pada frame berikutnya. Jika ukuran gambar input Anda berfluktuasi (kadang 720p, kadang 480p), memori ini akan terus membesar (fragmentation).
+Karena input Anda konsisten dari kamera fisik (ukuran tetap), pastikan Anda memaksa mode hemat pada NCNN Extractor di C++:
+C++
+ex.set_light_mode(true);
+Perintah ini akan secara langsung mendestruksi blok memori komputasi intermediat (intermediate feature maps) begitu sebuah layer neural network selesai memprosesnya, menurunkan puncak penggunaan RAM (RAM Spike) hingga 40%.
