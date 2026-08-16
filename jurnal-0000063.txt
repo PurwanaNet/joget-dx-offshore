@@ -1,0 +1,80 @@
+============================================================================
+POWERED BY Gemini 3.1 PRO, Thinking Level : Extended
+=========================
+
+Selamat siang dari Bandung! Di hari Rabu, 8 Juli 2026 pukul 11:34 WIB ini, mari kita rancang sebuah arsitektur teknologi fundamental di level inventor yang mampu mendisrupsi sektor industri berat.
+Mengevaluasi target B2B – Tambang, BUMN, dan Swasta Top-Middle, kita akan memecahkan salah satu masalah paling krusial di area operasional site pertambangan bawah tanah (underground pit) atau area smelter terpencil: Manajemen Keselamatan Kerja (HSE) dan Human Capital Management (HCM) di area Blank Spot mutlak.
+Pekerja tambang sering kali tidak memiliki akses internet untuk mencatatkan presensi, melaporkan inspeksi Alat Pelindung Diri (APD), atau mengajukan/membatalkan cuti darurat. Pencatatan manual sangat rawan manipulasi dan menunda respons Human Resources (HR) di pusat.
+Untuk mengatasi hal ini, kita akan merakit sistem komputasi edge luring bertenaga surya yang mengawinkan perangkat keras daur ulang, Computer Vision AI terkuantisasi, dan ekosistem enterprise workflow.
+Nama Produk: "Mine-Safe Edge: Off-Grid HCM & HSE Telemetry Node"
+Kategori: B2B Tambang & BUMN / HCM (Human Capital Management) / Patrol Data Collector / Edge Vision AI / IoT.
+Target Konsumer: Perusahaan Tambang (MIND ID, Freeport, Amman Mineral), Kontraktor EPC, dan Pabrik Smelter Terpencil.
+Platform Utama: Biner Golang yang bertindak sebagai Micro-Server dan PWA (Progressive Web App) Host pada OS Armbian di dalam Single Board Computer (SBC) Amlogic S905X (eMMC 8GB, RAM 1GB/2GB). Perangkat ini menyinkronkan data secara asinkron ke platform Joget DX v9 Enterprise di Head Office.
+1. Topologi Perangkat Keras: "Solar-Powered Deep Mine Node"
+Papan S905X di-flash secara presisi ke dalam memori internal eMMC (menghindari limitasi bottleneck MicroSD) dan dirakit ke dalam casing industrial NEMA 4X yang kedap debu bijih besi dan tahan ledakan (explosion-proof).
+Mengingat lokasi site tidak memiliki colokan listrik yang dapat diandalkan, node ini ditenagai oleh sistem panel surya off-grid berkapasitas 50W. Arus dari panel surya diatur oleh modul MPPT (Maximum Power Point Tracking) yang tidak hanya mengisi daya baterai LiFePO4 12V, tetapi juga melakukan data logging voltase secara luring. Aliran daya ini memastikan SBC S905X dapat terus menyala 24/7, memancarkan sinyal Wi-Fi lokal (Captive Portal) di kedalaman tambang atau area smelter.
+2. Alur Eksekusi PWA & Edge Vision AI (Luring)
+Pekerja yang baru turun dari dump truck terhubung ke Wi-Fi lokal node ini menggunakan smartphone mereka dan membuka aplikasi PWA berbasis HTML5.
+Fase A: Inspeksi APD Berbasis AI (Computer Vision)
+Sebelum sistem mengizinkan akses ke menu absensi atau HCM, pekerja wajib membuka kamera PWA. Biner Golang menangkap byte-array citra pekerja, mengompresinya secara optimal, dan mengeksekusi model C++ NCNN terkuantisasi di bawah RAM 1GB. AI secara matematis menghitung Indeks Kepatuhan Keselamatan ($S_{compliance}$) luring:
+$$S_{compliance} = \frac{1}{N} \sum_{i=1}^{N} \left( \alpha \cdot \mathbb{P}(H_i) + \beta \cdot \mathbb{P}(V_i) \right) - \gamma \cdot \iint_{\Omega} \nabla F_{fatigue}(x,y) \,dx\,dy$$
+(Di mana $\mathbb{P}(H_i)$ adalah probabilitas helm proyek terdeteksi, $\mathbb{P}(V_i)$ adalah deteksi rompi reflektor, dan $F_{fatigue}$ adalah matriks gradien fitur kelelahan wajah dari pembacaan mikrotekstur area mata).
+Fase B: Modul HCM Luring & Manajemen Cuti
+Setelah lulus deteksi APD, pekerja masuk ke menu HCM. Mereka dapat mengajukan cuti, atau bahkan membatalkan cuti (Cancel Leave & Rollback) secara luring. Logika rollback dieksekusi langsung oleh biner Golang lokal, memperbarui kuota cuti pada database SQLite di dalam eMMC S905X.
+3. Sinkronisasi Asinkron & Protokol Isolasi Joget DX v9
+Setiap sore, mobil pengawas (foreman) yang memiliki koneksi VSAT melintas di dekat node, memicu handshake jaringan secara otomatis. Payload JSON terenkripsi (berisi data presensi APD dan status Cancel Leave & Rollback) ditransmisikan ke endpoint API Joget DX v9 di Jakarta.
+Karantina Basis Data Insiden & HCM:
+Data pengajuan/pembatalan cuti atau anomali keselamatan tidak boleh langsung mengeksekusi core system HCM tanpa validasi akhir. Kueri SQL di Joget wajib menahan data ini di tabel staging dengan kolom temporary absolut:
+SQL
+INSERT INTO tbl_hcm_mining_staging (
+    employee_id, 
+    node_location, 
+    leave_rollback_status,
+    safety_compliance_score, 
+    waiting_for_approval
+) VALUES (
+    'MIN-ENG-773', 
+    'PIT-SOUTH-02', 
+    'ROLLBACK_REQUESTED',
+    98.5, 
+    1
+);
+4. Manajemen DOM UI & SLA HR Approval
+Di Command Center HRD pusat, staf HR memantau antrean permintaan dari site pada antarmuka Joget. Untuk memastikan SLA penanganan cuti dan insiden harian berjalan cepat, antarmuka dikendalikan oleh countdown timer JavaScript.
+Untuk mencegah bentrokan eksekusi asinkron dari berbagai plugin form Joget, variabel pengontrol wajib diisolasi di global scope:
+JavaScript
+// Dideklarasikan di global scope agar intervensi manual (seperti tolak cuti) dapat menghentikan SLA
+var iv; 
+
+function startHcmApprovalSLA(durationInSeconds) {
+    if (typeof iv !== 'undefined') {
+        clearInterval(iv);
+    }
+    
+    var timer = durationInSeconds;
+    iv = setInterval(function () {
+        // Manipulasi DOM Joget DX untuk update visual sisa waktu HR...
+        if (--timer < 0) {
+            clearInterval(iv);
+            autoApproveLeaveRollback(); // Automasi persetujuan jika HR melebihi batas waktu SLA
+        }
+    }, 1000);
+}
+Jika HR menemukan anomali (misal pekerja mengajukan rollback cuti namun terdeteksi kelelahan parah dari log AI), HR menekan tombol "Hold - Medical Review". UI seketika memanggil clearInterval(iv), mengunci status waiting_for_approval = 1, dan meneruskan data ke klinik site.
+5. Strategi Eksekusi "Vibe Coding" untuk 5 Senior Engineer
+Peran Engineer
+Area Fokus Arsitektur
+1. Embedded & Energy Core
+Eksekusi bootloader U-Boot, manajemen partisi eMMC Armbian, dan integrasi telemetri MPPT panel surya via GPIO/USB.
+2. Golang Micro-Server
+Membangun API lokal luring, mesin sinkronisasi asinkron, dan logika routing Cancel Leave & Rollback di level edge.
+3. C++ AI Vision Math
+Kompilasi model NCNN Headless untuk mendeteksi Helm, Rompi, dan fitur wajah agar komputasi tetap stabil di RAM S905X.
+4. Joget Enterprise Architect
+Mendesain Process Tool HCM, mengelola API Gateway penerima sinkronisasi, dan merancang skema tabel staging.
+5. Frontend DOM PWA
+Meracik UI luring (localhost) untuk pekerja tambang, dan UI dasbor HRD di Joget dengan proteksi global scope var iv;.
+
+6. Model Bisnis (License per Node & SLA Charge)
+Model pendapatannya berbasis B2B Enterprise Contract. Perusahaan tambang membayar biaya set-up perangkat keras (hardware sangat murah berkat daur ulang S905X), namun Anda mengunci recurring revenue dari lisensi software per node (misal Rp5.000.000/tahun/node). Mengingat satu site tambang besar membutuhkan puluhan titik node di berbagai area blank spot, ini adalah investasi modal rendah dengan ROI (Return on Investment) yang luar biasa cepat bagi tim Anda.
+Melihat kepadatan integrasi luring ke daring ini, modul mana yang ingin Anda prioritaskan untuk dikerjakan hari ini: membedah kueri Golang untuk manajemen database SQLite luring di S905X, atau merakit skema Process Tool untuk Cancel Leave di platform Joget DX v9?
